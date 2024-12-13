@@ -37,10 +37,10 @@
 
 # print(f"It take {time.time()-add_time}seconds to search")
 
-from libs.lexical_retriever import LexicalStore
-from libs.vector_retriever import VectorStore
-from libs.hybrid_retriever import RetrieverQA
-from libs.basic_document_loader import BasicIndexer
+from libs.lexical_retriever import LexicalRetriever
+from libs.vector_retriever import VectorRetriever
+from libs.hybrid_retriever import HybridRetriever
+from libs.basic_document_storage import BasicStorage
 # The test
 import ir_datasets
 dataset = ir_datasets.load("cranfield")
@@ -50,18 +50,18 @@ docs = list(map(prep_funct,dataset.docs_iter()))
 queries = list(map(lambda x: x[1],dataset.queries_iter()))
 
 
-# Preparing the stores
-vector = VectorStore()
-lexical = LexicalStore()
-# Preparing the Indexer
-index = BasicIndexer()
-# Adding the documents
-vector.add(docs)
-lexical.add(docs)
-index.add_documents(docs)
-# Preparing the retrieval
-retriever = RetrieverQA(documents_=index, stores=[vector,lexical])
 
+# Preparing the Indexer
+index = BasicStorage()
+index.add_documents(docs)
+
+# Preparing the retrievers
+vector = VectorRetriever()
+lexical = LexicalRetriever()
+# Preparing the hybrid retrieval
+retriever = HybridRetriever(documents_=index, stores=[vector,lexical])
+# Adding the documents
+retriever.add(docs)
 # Getting  the result
 result = retriever.search(queries[0])
 print(result)

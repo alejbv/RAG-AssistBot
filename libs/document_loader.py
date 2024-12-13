@@ -4,7 +4,7 @@ from pypdf import PdfReader
 from io import BytesIO
 from concurrent.futures import ProcessPoolExecutor
 
-class TextProcessor:
+class DocumentLoader:
     def __init__(self,data_path: str = "data/",filter = Set[str]):
         self.data_path = Path(data_path)
         self.data_filter = filter
@@ -36,5 +36,5 @@ class TextProcessor:
         
 if __name__ == '__main__':
     filter = ['.pdf']
-    processor = TextProcessor(filter=filter)
+    processor = DocumentLoader(filter=filter)
     print(processor.documents_info[1]['metadata'].author)

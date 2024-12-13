@@ -8,5 +8,9 @@ class DocumentStorage(ABC):
         raise NotImplementedError
     
     @abstractmethod
+    def get_all_documents(self)-> List[Dict]:
+        raise NotImplementedError
+    
+    @abstractmethod
     def get_documents(self,indexs: List[int]) -> List[Dict]:
         raise NotImplementedError

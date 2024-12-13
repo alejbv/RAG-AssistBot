@@ -2,7 +2,7 @@ from typing import Dict, List
 from libs.abstract_models.document_storage import DocumentStorage
 
 
-class BasicIndexer(DocumentStorage):
+class BasicStorage(DocumentStorage):
     def __init__(self) -> None:
         self.documents = []
         
