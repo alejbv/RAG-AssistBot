@@ -1,8 +1,8 @@
 from typing import Dict, List
-from libs.document_indexer import DocumentIndexer
+from libs.abstract_models.document_storage import DocumentStorage
 
 
-class BasicIndexer(DocumentIndexer):
+class BasicIndexer(DocumentStorage):
     def __init__(self) -> None:
         self.documents = []
         

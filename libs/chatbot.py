@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Union,List,Dict
-from libs.retriever import RetrieverQA
+from libs.hybrid_retriever import RetrieverQA
 from huggingface_hub import InferenceClient
 from prompts.prompt import *
 

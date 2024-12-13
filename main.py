@@ -1,10 +1,11 @@
 import streamlit as st
 # Retriever tools
 from libs.chatbot import Chatbot
-from libs.vector_store import VectorStore
-from libs.lexical_store import LexicalStore
-from libs.document_indexer import DocumentIndexer
-from libs.retriever import RetrieverQA
+from libs.vector_retriever import VectorRetriever
+from libs.lexical_retriever import LexicalRetriever
+from libs.abstract_models.document_storage import DocumentStorage
+from libs.hybrid_retriever import HybridRetriver
+
 """WalkTrough
 Indexing
 Retrieve and Generation
@@ -24,14 +25,14 @@ Retrieve and Generation
 """
 # 1. Load, chunk and index the contents of the blog to create a retriever.
 # For handling the load of documents
-documents = DocumentIndexer()
+documents = DocumentStorage()
 # For handling the storage and retrieval of data chunks with semantic search
-store = VectorStore()
+store = VectorRetriever()
 # For handling the storage and retrieval of data chunks with lexical search
-lexical = LexicalStore()
+lexical = LexicalRetriever()
 
 # A retriever for handling all the retrieval process
-retriever = RetrieverQA(documents_=documents, stores=[store,lexical])
+retriever = HybridRetriver(documents_=documents, stores=[store,lexical])
 # 2. Incorporate the retriever into a question-answering chain.
 # Load the Chatbot
 bot = Chatbot(retriever)

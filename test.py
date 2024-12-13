@@ -37,9 +37,9 @@
 
 # print(f"It take {time.time()-add_time}seconds to search")
 
-from libs.lexical_store import LexicalStore
-from libs.vector_store import VectorStore
-from libs.retriever import RetrieverQA
+from libs.lexical_retriever import LexicalStore
+from libs.vector_retriever import VectorStore
+from libs.hybrid_retriever import RetrieverQA
 from libs.basic_document_loader import BasicIndexer
 # The test
 import ir_datasets
