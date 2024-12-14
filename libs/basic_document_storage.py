@@ -10,6 +10,8 @@ class BasicStorage(DocumentStorage):
     def add_documents(self, documents: List[Dict]) -> None:
         self.documents.extend(documents)
         
+    def get_all_documents(self):
+        return self.documents
     
     def get_documents(self, indexs: List[int]) -> List[Dict]:
         result = []

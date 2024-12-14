@@ -1,8 +1,9 @@
 from libs.abstract_models.document_storage import DocumentStorage
 from libs.abstract_models.retriever import Retriever
-from concurrent.futures import ProcessPoolExecutor
 from typing import Union, List,Dict
 
+
+#TODO: Look for ways of adding concurrency in the processes for adding and searching the documents
 class HybridRetriever:
     def __init__(self,documents_: DocumentStorage, retrievers: List[Retriever], weights=None) -> None:
         self.document_index = documents_
@@ -20,9 +21,8 @@ class HybridRetriever:
         num_retrievers = len(self.retrievers_list)
         texts = [document['text'] for document in documents]
         # Creating the processes for concurrently add the documents to each of the retrievers
-        with ProcessPoolExecutor(max_workers=num_retrievers) as executor:
-            for retriever in self.retrievers_list:
-                executor.submit(retriever.add,texts)
+        for retriever in self.retrievers_list:
+            retriever.add(texts)
         
         
     def search(self,query: Union[str,List[str]],k: int=20):
@@ -38,14 +38,10 @@ class HybridRetriever:
         if isinstance(query,str):
             query = [query]
         
-        # Use concurrency for improve the performance of the individuals search
-        num_retrievers = len(self.retrievers_list)
-        with ProcessPoolExecutor(max_workers=num_retrievers) as executor:
-            future_results = [executor.submit(retriever.search,query,k) for retriever in self.retrievers_list]
-        
-        
-        # Waiting for each of the search end for retrieving the result
-        search_results = [search.result() for search in future_results]     
+        # Retrieving the document matching the queries in each of the retrievers
+        search_results = []
+        for retriever in self.retrievers_list:
+            search_results.append(retriever.search(query,k=k))
         
         # Reranking the search result
         combined_results = {}
