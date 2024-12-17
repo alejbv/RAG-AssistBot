@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import Union,List,Dict
-from libs.hybrid_retriever import RetrieverQA
+from libs.hybrid_retriever import HybridRetriever
 from huggingface_hub import InferenceClient
 from prompts.prompt import *
 
@@ -8,9 +8,9 @@ from prompts.prompt import *
 class Chatbot:
     def __init__(
         self,
-        retriever: RetrieverQA,
+        retriever: HybridRetriever,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
-        user_prompt:    str = DEFAULT_USER_PROMPT,
+        user_prompt:   str = DEFAULT_USER_PROMPT,
     ) -> None:
         # Retrieve Tools
         self.retriever = retriever

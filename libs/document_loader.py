@@ -2,14 +2,14 @@ from pathlib import Path
 from typing import Set
 from pypdf import PdfReader
 from io import BytesIO
-from libs.abstract_models.document_processor import DocumentProcessor
+from libs.abstract_models.text_splitter import TextSplitter
 
 class DocumentLoader:
-    def __init__(self,processor: DocumentProcessor,data_path: str = "data/",filter = Set[str]):
+    def __init__(self,splitter: TextSplitter,data_path: str = "data/",filter = Set[str]):
         # Setting the variables for the object
         self.data_path = Path(data_path)
         self.data_filter = filter
-        self.document_processor = processor
+        self.splitter = splitter
         # Call the methods for loading and prorcessing the documents in the data_path
         self.__load_data()
         self.__process_data()
@@ -44,7 +44,7 @@ class DocumentLoader:
         """
         for document in self.documents_info.values():
             #
-            document['text'] = self.document_processor.process_document(document['text'])
+            document['text'] = self.splitter.split_text(document['text'])
 
         
 if __name__ == '__main__':

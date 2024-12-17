@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-class DocumentProcessor(ABC):
+class TextSplitter(ABC):
     
     @abstractmethod
-    def process_document(self,documents: List[str])-> List[str]:
+    def split_text(self,documents: List[str]) -> List[str]:
         raise NotImplementedError

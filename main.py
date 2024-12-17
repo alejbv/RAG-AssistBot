@@ -4,7 +4,7 @@ from libs.chatbot import Chatbot
 from libs.vector_retriever import VectorRetriever
 from libs.lexical_retriever import LexicalRetriever
 from libs.abstract_models.document_storage import DocumentStorage
-from libs.hybrid_retriever import HybridRetriver
+from libs.hybrid_retriever import HybridRetriever
 
 """WalkTrough
 Indexing
@@ -32,7 +32,7 @@ store = VectorRetriever()
 lexical = LexicalRetriever()
 
 # A retriever for handling all the retrieval process
-retriever = HybridRetriver(documents_=documents, stores=[store,lexical])
+retriever = HybridRetriever(documents_=documents, stores=[store,lexical])
 # 2. Incorporate the retriever into a question-answering chain.
 # Load the Chatbot
 bot = Chatbot(retriever)

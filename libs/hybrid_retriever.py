@@ -2,7 +2,8 @@ from libs.abstract_models.document_storage import DocumentStorage
 from libs.abstract_models.retriever import Retriever
 from typing import Union, List,Dict
 
-
+#TODO: Handling more than a query at a time(in case of use of HyDE or similar techinques)
+#TODO: Add a thresholds for the document score
 #TODO: Look for ways of adding concurrency in the processes for adding and searching the documents
 class HybridRetriever:
     def __init__(self,documents_: DocumentStorage, retrievers: List[Retriever], weights=None) -> None:

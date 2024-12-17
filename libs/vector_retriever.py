@@ -1,16 +1,10 @@
 import streamlit as st
 import numpy as np
-from typing import List,Dict
+from typing import List,Tuple
 from libs.abstract_models.retriever import Retriever
 from faiss import IndexFlatIP,IndexIVFFlat
 from openai import OpenAI
 
-"""
-Data schema
-    text: string -> The text corresponding to the chunk
-    metadata: Dict-> The metadata of the document
-    Returns:
-"""
 class VectorRetriever(Retriever):
     def __init__(self,d:int = 768, nlist:int = 25) -> None:
         self.d = d
@@ -19,7 +13,7 @@ class VectorRetriever(Retriever):
         self._index = IndexIVFFlat(self._quantizer, self.d, self.nlist)
         self.client = OpenAI(base_url=st.secrets.BASE_URL,api_key=st.secrets.API_KEY)
 
-    def embed(self,documents: List[Dict]):
+    def embed(self,documents: List[str]):
         embeddings = []
         try:
             for doc in documents:            
@@ -48,7 +42,7 @@ class VectorRetriever(Retriever):
         self._index.add(embeddings)
         #self._data.extend(documents)
         
-    def search(self, queries: List[str], k: int=20, nprobe: int=5) -> List[Dict]:
+    def search(self, queries: List[str], k: int=20, nprobe: int=5)-> Tuple[List,List]:
         """Function for retrieving a list of document that match the given queries
 
         Args:
@@ -56,7 +50,8 @@ class VectorRetriever(Retriever):
             k (int, optional): The number of documents to retrieve. Defaults to 50.
 
         Returns:
-            List[Dict]: The documents that matches the queries
+            Tuple[List,List]: A tuple with to list, the first the firt k ranked document and 
+            the second the documents ranking scores
         """
         # Get the document embedding
         query_embedding = self.embed(queries)
@@ -84,8 +79,7 @@ if __name__=='__main__':
         "Should I sign up for Medicare Part B if I have Veterans' Benefits?"]
 
 
-    corpus = [dict(text=document,metadata={}) for document in texts]
-    store = VectorRetriever(nlist=5)
-    store.add(corpus)
-    result = store.search([texts[5]],k=5,nprobe=5)
+    store = VectorRetriever(nlist=1)
+    store.add(texts)
+    result = store.search([texts[5]],k=5,nprobe=1)
     print(result)

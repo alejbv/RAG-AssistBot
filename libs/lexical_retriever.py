@@ -1,7 +1,8 @@
 import spacy
 import nltk
+#from rank_bm25 import BM25Okapi
 from bm25s import BM25
-from typing import List,Dict
+from typing import List, Tuple
 from functools import partial
 from libs.abstract_models.retriever import Retriever
 
@@ -54,7 +55,7 @@ class LexicalRetriever(Retriever):
         # Last: Extend the currente dataset
         #self._data.extend(documents)
 
-    def search(self, queries: List[str], k: int=20):
+    def search(self, queries: List[str], k: int=20) -> Tuple[List,List]:
         """Function for searching given a query a set of document similar to that query
 
         Args:
@@ -62,7 +63,8 @@ class LexicalRetriever(Retriever):
             k (int, optional): The number of document to retrieve. Defaults to 20.
 
         Returns:
-            Tuple[List[str],List[float]]:Return the document retrieve given the query and the ranking score for each one
+            Tuple[List,List]: A tuple with to list, the first the firt k ranked document and 
+            the second the documents ranking scores
         """
         # First: Tokenize the query
         query_tokens = self.tokenize(queries)
@@ -75,10 +77,11 @@ class LexicalRetriever(Retriever):
     
 if __name__ == '__main__':
     from spacy.lang.es.examples import sentences 
-    corpus = [dict(text=document,metadata={}) for document in sentences]
-    store = LexicalRetriever()
-    store.add(corpus)
-    print(store.search([sentences[1]],k=5))
+    #store = LexicalRetriever()
+    #store.add(sentences)
+    for i in range(0,6):
+        print(sentences[i])
+    #print(store.search([sentences[1]],k=5))
     
     
     
