@@ -2,8 +2,9 @@ from pathlib import Path
 from typing import Set
 from pypdf import PdfReader
 from io import BytesIO
+from libs.abstract_models.document_loader import DocumentLoader
 
-class DocumentLoader:
+class PDFLoader(DocumentLoader):
     def __init__(self,data_path: str = "data/",filter = Set[str]):
         # Setting the variables for the object
         self.data_path = Path(data_path)
@@ -33,5 +34,5 @@ class DocumentLoader:
         
 if __name__ == '__main__':
     filter = ['.pdf']
-    processor = DocumentLoader(filter=filter)
+    processor = PDFLoader(filter=filter)
     print(processor.documents_info[1]['metadata'].author)

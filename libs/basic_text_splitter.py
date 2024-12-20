@@ -1,5 +1,5 @@
 from libs.abstract_models.text_splitter import TextSplitter
-from typing import List
+from typing import List,Dict
 
 # Dudas de cual usar
 # 1. Recursive
@@ -11,15 +11,32 @@ class BasicTextSplitter(TextSplitter):
         self.chunk_size = chunk_size
         self.overlap = overlap
         
-    def split_text(self, document: str) -> List[str]:
-        """This Function take a document and split it in chunks of the size of the chunk_size and  with and overlap of 
-        the overlap size
+    def split_documents(self, documents: List[Dict]) -> List[Dict]:
+        """This Function take a list of documents and split them in chunks. 
+        Each with size the `chunk_size` and  with and overlap of 
+        the `overlap` size
+        
         Args:
-            documents (str): The document to process
+            documents (List[Dict]): The document to process
 
         Returns:
-            A new List with the chunks of the document
+            List[Dict]: The documents with the chunks of text
         """
+        result = []
+        for document in documents:
+            # Split the document
+            chunks = self.__split_document(document['text'])
+            # Save the chunks
+            for i, chunk in enumerate(chunks):
+                result.append({
+                    'metadata': document['metadata'],
+                    'text': chunk,
+                    'chunk_id': i
+                })
+        
+        return result
+    
+    def __split_document(self, document: Dict) -> List[Dict]:
         # Split the document in tokens
         tokens = document.split()
         chunks = []
