@@ -1,7 +1,7 @@
 from typing import Dict, List
 from libs.abstract_models.document_storage import DocumentStorage
 
-
+# Implement the use redis for storage the documents and the metadata
 class BasicStorage(DocumentStorage):
     def __init__(self) -> None:
         self.documents = []

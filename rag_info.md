@@ -1,4 +1,4 @@
-### Arquitectura de una Aplicación con RAG
+## Arquitectura de una Aplicación con RAG
 Descripción de la arquitectura básica que utilizan las aplicaciones basadas en RAG
 1. La capa de orquestación recibe la entrada del usuario en cualquier metadato asociado (como el historial de conversaciones), interactúa con todas las herramientas relacionadas, envía el mensaje al LLM y devuelve el resultado. Las capas de orquestación suelen estar compuestas por herramientas como LangChain, Semantic Kernel y otras con un código nativo (a menudo Python) que une todo.
 
@@ -29,7 +29,7 @@ Para consultar los datos, no solo se necesitan los datos, sino que también se n
 
 Algo a tener en cuenta es el cargar el contenido de los documentos en la memoria. Herramientas como Unstructured, LlamaIndex y los cargadores de documentos de LangChain permiten cargar todo tipo de documentos en las aplicaciones, en particular contenido no estructurado.
 ###### Paso 3: Recuperacion de información(Semantic Search)
-En pocas palabras, la búsqueda semántica funciona comparando embedding de oraciones: se busca un resultado cuyo embedding sea cercano al embedding de la consulta. Esta búsqueda tiende a ser más lenta que la léxica, una buena idea sería usar léxical search para recuperar los documentos iniciales y luego usar un modelo semántico para realizar rerank a los documentos recuperados[^1].
+En pocas palabras, la búsqueda semántica funciona comparando embedding de oraciones: se busca un resultado cuyo embedding sea cercano al embedding de la consulta. Esta búsqueda tiende a ser más lenta que la léxica, una buena idea sería usar léxical search para recuperar los documentos iniciales y luego usar un modelo semántico para realizar rerank a los documentos recuperados[¹].
  
 [^1]:Considerar investigar Contextual RAG para mejorar la fase de Retreival .
 

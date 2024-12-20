@@ -2,27 +2,21 @@ from pathlib import Path
 from typing import Set
 from pypdf import PdfReader
 from io import BytesIO
-from libs.abstract_models.text_splitter import TextSplitter
 
 class DocumentLoader:
-    def __init__(self,splitter: TextSplitter,data_path: str = "data/",filter = Set[str]):
+    def __init__(self,data_path: str = "data/",filter = Set[str]):
         # Setting the variables for the object
         self.data_path = Path(data_path)
         self.data_filter = filter
-        self.splitter = splitter
-        # Call the methods for loading and prorcessing the documents in the data_path
-        self.__load_data()
-        self.__process_data()
-
             
-    def __load_data(self):
+    def load_data(self):
         """This Function load the documents in the self._data_path
         """
         document_info = {}
         documents = 1
         for file in self.data_path.iterdir():
             if file.suffix in self.data_filter:
-                # Aqui abrir cada pdf individualmente y procesarlos
+                # Here open the file and read the content
                 # Preparing the reader for interacting with the pdf
                 reader = PdfReader(BytesIO(file.read_bytes()))
                 # Getting the information of the current document
@@ -36,16 +30,6 @@ class DocumentLoader:
 
         
         self.documents_info = document_info                
-
-    
-    def __process_data(self):
-        """This Function take the documents loaded in self.__load_data() and process all of them 
-        
-        """
-        for document in self.documents_info.values():
-            #
-            document['text'] = self.splitter.split_text(document['text'])
-
         
 if __name__ == '__main__':
     filter = ['.pdf']
