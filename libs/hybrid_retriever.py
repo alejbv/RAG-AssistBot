@@ -6,8 +6,8 @@ from typing import Union, List,Dict
 #TODO: Add a thresholds for the document score
 #TODO: Look for ways of adding concurrency in the processes for adding and searching the documents
 class HybridRetriever:
-    def __init__(self,documents_: DocumentStorage, retrievers: List[Retriever], weights=None) -> None:
-        self.document_index = documents_
+    def __init__(self, storage_: DocumentStorage, retrievers: List[Retriever], weights=None) -> None:
+        self.document_index = storage_
         self.retrievers_list = retrievers
         self.weights = weights if weights is not None else [1/len(retrievers)]* len(retrievers)
         

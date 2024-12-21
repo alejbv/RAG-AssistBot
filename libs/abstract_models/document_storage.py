@@ -2,7 +2,7 @@ from abc import ABC,abstractmethod
 from typing import List,Dict
 
 class DocumentStorage(ABC):
-    
+        
     @abstractmethod
     def add_documents(self,documents:List[Dict]) -> None:
         raise NotImplementedError

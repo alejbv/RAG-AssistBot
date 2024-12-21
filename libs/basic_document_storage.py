@@ -6,7 +6,6 @@ class BasicStorage(DocumentStorage):
     def __init__(self) -> None:
         self.documents = []
         
-        
     def add_documents(self, documents: List[Dict]) -> None:
         self.documents.extend(documents)
         

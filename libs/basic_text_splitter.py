@@ -23,20 +23,34 @@ class BasicTextSplitter(TextSplitter):
             List[Dict]: The documents with the chunks of text
         """
         result = []
-        for document in documents:
-            # Split the document
+        count = 1
+        for document_id, document in documents.items():
+            # Split the document calling the private function __split_document for each document
             chunks = self.__split_document(document['text'])
+            
+            chunk_metadata = {key: value for key, value in document['metadata'].items()}
             # Save the chunks
             for i, chunk in enumerate(chunks):
                 result.append({
-                    'metadata': document['metadata'],
                     'text': chunk,
-                    'chunk_id': i
+                    'document_id': document_id,
+                    'chunk_id': i,
+                    'chunk_index': count,
+                    **chunk_metadata
                 })
+                count += 1
         
         return result
     
     def __split_document(self, document: Dict) -> List[Dict]:
+        """This is a private function that split a document in chunks of text
+
+        Args:
+            document (Dict): The document to split
+
+        Returns:
+            List[Dict]: The chunks of the document
+        """
         # Split the document in tokens
         tokens = document.split()
         chunks = []

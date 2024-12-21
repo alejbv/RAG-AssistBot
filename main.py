@@ -5,6 +5,8 @@ from libs.vector_retriever import VectorRetriever
 from libs.lexical_retriever import LexicalRetriever
 from libs.abstract_models.document_storage import DocumentStorage
 from libs.hybrid_retriever import HybridRetriever
+from libs.pdf_loader import PDFLoader
+from libs.basic_text_splitter import BasicTextSplitter
 
 """WalkTrough
 Indexing
@@ -24,18 +26,26 @@ Retrieve and Generation
 5-Give the User the Response
 """
 # 1. Load, chunk and index the contents of the blog to create a retriever.
-# For handling the load of documents
-documents = DocumentStorage()
-# For handling the storage and retrieval of data chunks with semantic search
-store = VectorRetriever()
-# For handling the storage and retrieval of data chunks with lexical search
-lexical = LexicalRetriever()
+# Load the documents
+pdf_loader = PDFLoader()
+documents = pdf_loader.load_data()
+# Split the documents in chunks
+splitter = BasicTextSplitter()
+chunked_documents = splitter.split_documents(documents)
+# Store the documents
+storage = DocumentStorage()
+storage.add_documents(chunked_documents)
 
+# 2. Create a retriever to handle the retrieval process.
+# For handling the storage and retrieval of data chunks with semantic search
+semantic_retriever = VectorRetriever()
+# For handling the storage and retrieval of data chunks with lexical search
+lexical_retriever = LexicalRetriever()
 # A retriever for handling all the retrieval process
-retriever = HybridRetriever(documents_=documents, stores=[store,lexical])
-# 2. Incorporate the retriever into a question-answering chain.
-# Load the Chatbot
-bot = Chatbot(retriever)
+hybrid_retriever = HybridRetriever(storage_= storage, retrievers=[semantic_retriever,lexical_retriever])
+
+# 3. Load the Chatbot with the retriever
+bot = Chatbot(hybrid_retriever)
 st.title("Bot de Servicios Legales")
 
 # Initialize chat history
