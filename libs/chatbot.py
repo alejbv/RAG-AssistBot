@@ -24,25 +24,25 @@ class Chatbot:
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
         
-        if "history" not in st.session_state:
-            st.session_state.history = []
+        # History        
+        self.message_history = []
 
     def reset(self):
-        st.session_state.history.clear()
+        self.message_history.clear()
 
     def store(self, role: str, content:str):
-        st.session_state.history.append(dict(role=role, content=content))
+        self.message_history.append(dict(role=role, content=content))
 
     def history(self, memory: Union[int,str]):
         if memory == 0:
             return []
 
         if memory == "all":
-            messages = st.session_state.history
+            messages = self.message_history
         else:
-            messages = st.session_state.history[-memory:]
+            messages = self.message_history[-memory:]
 
-        return messages
+        return messages.copy()
 
     def _stream(self, messages: List[Dict]):
         result = []
@@ -74,24 +74,31 @@ class Chatbot:
         memory:Union[int,str]="all",
         context: str="",
         role:  str="user",
-        stream:bool=True,
+        user_prompt: str="",
         store: bool=True,
-        user_prompt: str=None,
+        stream:bool=True
         #**kwargs,
     ):
+        # Retrive the history of the conversation with the user
         messages = self.history(memory)
-        if store:
-            self.store(role, query)
+        # If the memory is not all, insert the system prompt at the beginning of the messages
+        if memory != "all":
+            messages.insert(0, dict(role="system", content=self.system_prompt.format(context=context)))
 
-        messages.insert(0, dict(role="system", content=self.system_prompt.format(context=context)))
-        
+        # If the role is user, use the user prompt to generate the message
         if role == "user":
+            # If the user prompt is not given, use the default user prompt
             if user_prompt is None:
                 user_prompt = self.user_prompt
 
-            user_message = user_prompt.format(query=query)
+            current_message = user_prompt.format(query=query)
 
-        messages.append(dict(role=role, content=user_message))
+            # If store is True, store the message in the history
+        if store:
+            self.store(role, current_message)
+
+        # Append the user message to the messages
+        messages.append(dict(role=role, content=current_message))
         
         if stream:
             return self._stream(messages)
