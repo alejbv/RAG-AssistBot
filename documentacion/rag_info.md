@@ -1,3 +1,36 @@
+## WalkTrough
+### 1. Retrieve and Generation
+    
+    1.1 User Query Input
+    
+    1.2 Query Analysis Techniques
+    
+    1.3 Rewrite the query using the conversational history? (query, conversation history) -> LLM -> rephrased query -> retriever
+    
+    1.4 Retrieve Chunks
+    
+    1.5 Retrieve Strategies: Hybrid Search with BM25 and 
+    Vector Embedding(Reranker)
+    
+    1.6 Contextual Compressor and Filters:
+
+### 2. Indexing and Chunk
+        
+        2.1 Chunk Strategies
+    
+        2.2 Index Strategies: Parent Document Retriever
+
+### 3 Augment Prompt
+    
+    3.1 Augment The Prompt with the data retrieved and the conversation history
+    
+    3.2-Manage Conversation History(Compress it)
+
+### 4-Ask the model
+
+### 5-Give the User the Response
+
+
 ## Arquitectura de una Aplicación con RAG
 Descripción de la arquitectura básica que utilizan las aplicaciones basadas en RAG
 1. La capa de orquestación recibe la entrada del usuario en cualquier metadato asociado (como el historial de conversaciones), interactúa con todas las herramientas relacionadas, envía el mensaje al LLM y devuelve el resultado. Las capas de orquestación suelen estar compuestas por herramientas como LangChain, Semantic Kernel y otras con un código nativo (a menudo Python) que une todo.

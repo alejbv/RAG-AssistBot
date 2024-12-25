@@ -33,7 +33,7 @@ respuesta concisa.
 \n\n
 {context}
 """
-DEFAULT_USER_PROMPT = "{input}"
+DEFAULT_USER_PROMPT = "{query}"
 
 ###############################################################################
 GENERATE_CHUNKS_PROMPT="""

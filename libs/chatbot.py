@@ -16,9 +16,10 @@ class Chatbot:
         self.retriever = retriever
         
         # LLM Tools
-        self.model = st.secrets.model
-        self.client = InferenceClient(model=self.model,token=st.secrets.api_key)
-
+        self.client = InferenceClient(model=st.secrets.INFERENCE_MODEL,
+                                      token=st.secrets.INFERENCE_API_KEY
+                                    )
+        
         # Prompting Tools
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
@@ -71,35 +72,37 @@ class Chatbot:
         self,
         query: str,
         memory:Union[int,str]="all",
+        context: str="",
         role:  str="user",
         stream:bool=True,
         store: bool=True,
         user_prompt: str=None,
-        **kwargs,
+        #**kwargs,
     ):
         messages = self.history(memory)
         if store:
             self.store(role, query)
 
-        messages.insert(0, dict(role="system", content=self.system_prompt))
-
+        messages.insert(0, dict(role="system", content=self.system_prompt.format(context=context)))
+        
         if role == "user":
             if user_prompt is None:
                 user_prompt = self.user_prompt
 
-            query = user_prompt.format(input=query, **kwargs)
+            user_message = user_prompt.format(query=query)
 
-        messages.append(dict(role=role, content=query))
-
-        if role == "user":
-            if stream:
-                return self._stream(messages)
-            else:
-                return self._chat(messages)
+        messages.append(dict(role=role, content=user_message))
+        
+        if stream:
+            return self._stream(messages)
+        else:
+            return self._chat(messages)
 
     def reply(self,query):
         """Function for reply to the user input. Also it handle the necessary steps to build the answer"""
         # First: Retrieve the context
-        context = self.retriever.search(query)
+        retrieved_chunkst = self.retriever.search(query)
+        #Get only the text context
+        context = ' '.join([chunk['text'] for chunk in retrieved_chunkst])
         # Last : Generate a response for the user using the given context
-        self.submit(query,store=True,stream=False,context=context)
+        return self.submit(query,store=False,context=context,stream=False)

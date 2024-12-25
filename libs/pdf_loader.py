@@ -26,11 +26,8 @@ class PDFLoader(DocumentLoader):
                 temporal_info['text'] = ''.join((page.extract_text() for page in reader.pages))
 
                 # Saving the information
-                print(temporal_info)
                 self.documents_info[documents] = temporal_info
                 documents+=1
-            else:
-                print("No")
 
         return self.documents_info
         

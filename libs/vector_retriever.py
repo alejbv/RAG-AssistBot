@@ -11,7 +11,8 @@ class VectorRetriever(Retriever):
         self.nlist=nlist
         self._quantizer = IndexFlatIP(self.d)  # the other index
         self._index = IndexIVFFlat(self._quantizer, self.d, self.nlist)
-        self.client = OpenAI(base_url=st.secrets.BASE_URL,api_key=st.secrets.API_KEY)
+        self.client = OpenAI(base_url=st.secrets.BASE_URL,api_key=st.secrets.EMBEDDING_API_KEY)
+        self.model = st.secrets.EMBEDDING_MODEL
 
     def embed(self,documents: List[str]):
         embeddings = []
@@ -19,7 +20,7 @@ class VectorRetriever(Retriever):
             for doc in documents:            
                 response = self.client.embeddings.create(
                             input=[doc],
-                            model="nomic-ai/nomic-embed-text-v1.5",)
+                            model=self.model,)
 
                 embeddings.append(response.data[0].embedding)
         except Exception as e:
