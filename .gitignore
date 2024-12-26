@@ -1,4 +1,6 @@
 __pycache__
 .env
+.streamlit
+data/
+.toml
 .secrets/
-.streamlit/
