@@ -6,5 +6,5 @@ EMBEDDING_MODEL = "nomic-ai/nomic-embed-text-v1.5"
 INFERENCE_MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
 
 # Keys
-EMBEDDING_API_KEY = "fw_3ZKBNMijdse9d4WXxDRSjskg"
-INFERENCE_API_KEY = "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"
+EMBEDDING_API_KEY = ""
+INFERENCE_API_KEY = ""
