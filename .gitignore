@@ -5,3 +5,4 @@ data/**/
 source/**/
 pages/**/
 .toml
+.secrets

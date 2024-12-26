@@ -48,6 +48,9 @@ def submit(
 
     print(messages)
 
-submit("Hello, who are you?", memory=2)
-print("history")
-print(message_history)
+
+import tomli
+
+with open(".secrets/config.toml", 'rb') as f:
+    config = tomli.load(f)
+    print(config.BASE_URL)

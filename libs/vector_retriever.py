@@ -1,4 +1,4 @@
-import streamlit as st
+import tomli
 import numpy as np
 from typing import List,Tuple
 from libs.abstract_models.retriever import Retriever
@@ -11,8 +11,12 @@ class VectorRetriever(Retriever):
         self.nlist=nlist
         self._quantizer = IndexFlatIP(self.d)  # the other index
         self._index = IndexIVFFlat(self._quantizer, self.d, self.nlist)
-        self.client = OpenAI(base_url=st.secrets.BASE_URL,api_key=st.secrets.EMBEDDING_API_KEY)
-        self.model = st.secrets.EMBEDDING_MODEL
+        
+        # Loading the configuration file
+        with open(".secrets/config.toml", 'rb') as f:
+            config = tomli.load(f)            
+            self.client = OpenAI(base_url=config["BASE_URL"],api_key=config["EMBEDDING_API_KEY"])
+            self.model = config["EMBEDDING_MODEL"]
 
     def embed(self,documents: List[str]):
         embeddings = []

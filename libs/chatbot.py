@@ -1,4 +1,4 @@
-import streamlit as st
+import tomli
 from typing import Union,List,Dict
 from libs.hybrid_retriever import HybridRetriever
 from huggingface_hub import InferenceClient
@@ -16,16 +16,18 @@ class Chatbot:
         self.retriever = retriever
         
         # LLM Tools
-        self.client = InferenceClient(model=st.secrets.INFERENCE_MODEL,
-                                      token=st.secrets.INFERENCE_API_KEY
-                                    )
-        
+        with open(".secrets/config.toml", 'rb') as f:
+            config = tomli.load(f)
+            self.client = InferenceClient(model=config["INFERENCE_MODEL"],
+                                          token=config["INFERENCE_API_KEY"]
+                                        )
         # Prompting Tools
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
         
         # History        
         self.message_history = []
+        self.store("system", self.system_prompt)
 
     def reset(self):
         self.message_history.clear()
@@ -58,13 +60,13 @@ class Chatbot:
         response = (
             self.client.chat.completions.create(
                 messages=messages,
-                max_tokens=256,
+                max_tokens=500,
                 temperature=0.4
             )
             .choices[0]
             .message
         )
-        print(response, flush=True)
+        #print(response, flush=True)
         self.store("assistant", response.content)
         return response.content
 
@@ -74,7 +76,7 @@ class Chatbot:
         memory:Union[int,str]="all",
         context: str="",
         role:  str="user",
-        user_prompt: str="",
+        user_prompt: str=None,
         store: bool=True,
         stream:bool=True
         #**kwargs,
@@ -110,6 +112,6 @@ class Chatbot:
         # First: Retrieve the context
         retrieved_chunkst = self.retriever.search(query)
         #Get only the text context
-        context = ' '.join([chunk['text'] for chunk in retrieved_chunkst])
+        context = ''.join([chunk['text'] for chunk in retrieved_chunkst])
         # Last : Generate a response for the user using the given context
-        return self.submit(query,store=False,context=context,stream=False)
+        return self.submit(query,store=True,context=context,stream=False)
