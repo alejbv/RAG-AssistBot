@@ -3,6 +3,18 @@ from typing import Union,List,Dict
 from libs.hybrid_retriever import HybridRetriever
 from huggingface_hub import InferenceClient
 from prompts.prompt import *
+from pydantic import BaseModel
+
+class PromptFormat(BaseModel):
+    context: str
+    query: str
+    response: str
+    reasoning: str
+    references: str
+    feedback: str
+    response_length: int
+    error: str
+
 
 
 class Chatbot:
@@ -60,11 +72,14 @@ class Chatbot:
         response = (
             self.client.chat.completions.create(
                 messages=messages,
-                max_tokens=500,
-                temperature=0.4
+                max_tokens=2400,
+                temperature=0.4,
+                #response_format="json"
+                #response_format=PromptFormat,
             )
             .choices[0]
             .message
+            #.parsed
         )
         #print(response, flush=True)
         self.store("assistant", response.content)
@@ -79,13 +94,12 @@ class Chatbot:
         user_prompt: str=None,
         store: bool=True,
         stream:bool=True
-        #**kwargs,
     ):
         # Retrive the history of the conversation with the user
         messages = self.history(memory)
         # If the memory is not all, insert the system prompt at the beginning of the messages
         if memory != "all":
-            messages.insert(0, dict(role="system", content=self.system_prompt.format(context=context)))
+            messages.insert(0, dict(role="system", content=self.system_prompt))
 
         # If the role is user, use the user prompt to generate the message
         if role == "user":
@@ -93,7 +107,7 @@ class Chatbot:
             if user_prompt is None:
                 user_prompt = self.user_prompt
 
-            current_message = user_prompt.format(query=query)
+            current_message = user_prompt.format(context=context,query=query)
 
             # If store is True, store the message in the history
         if store:
