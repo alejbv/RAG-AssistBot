@@ -12,7 +12,6 @@ class PromptFormat(BaseModel):
     reasoning: str
     references: str
     feedback: str
-    response_length: int
     error: str
 
 
@@ -74,16 +73,13 @@ class Chatbot:
                 messages=messages,
                 max_tokens=2400,
                 temperature=0.4,
-                #response_format="json"
-                #response_format=PromptFormat,
+                response_format={"type": "json", "value": PromptFormat.model_json_schema()},
             )
             .choices[0]
             .message
-            #.parsed
         )
-        #print(response, flush=True)
-        self.store("assistant", response.content)
-        return response.content
+        #print(response.content, flush=True)
+        return PromptFormat.model_validate_json(response.content)
 
     def submit(
         self,
@@ -119,7 +115,10 @@ class Chatbot:
         if stream:
             return self._stream(messages)
         else:
-            return self._chat(messages)
+            message = self._chat(messages)
+            # Store the response in the history
+            self.store("assistant", message.response)
+            return message.response
 
     def reply(self,query):
         """Function for reply to the user input. Also it handle the necessary steps to build the answer"""
