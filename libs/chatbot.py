@@ -3,6 +3,14 @@ from typing import Union,List,Dict
 from libs.hybrid_retriever import HybridRetriever
 from huggingface_hub import InferenceClient
 from prompts.prompt import *
+from pydantic import BaseModel
+
+class PromptFormat(BaseModel):
+    #context: str
+    query: str
+    reasoning_steps: str
+    response: str
+
 
 
 class Chatbot:
@@ -60,15 +68,15 @@ class Chatbot:
         response = (
             self.client.chat.completions.create(
                 messages=messages,
-                max_tokens=500,
-                temperature=0.4
+                max_tokens=2400,
+                temperature=0.4,
+                response_format={"type": "json", "value": PromptFormat.model_json_schema()},
             )
             .choices[0]
             .message
         )
-        #print(response, flush=True)
-        self.store("assistant", response.content)
-        return response.content
+        #print(response.content, flush=True)
+        return PromptFormat.model_validate_json(response.content)
 
     def submit(
         self,
@@ -76,25 +84,18 @@ class Chatbot:
         memory:Union[int,str]="all",
         context: str="",
         role:  str="user",
-        user_prompt: str=None,
         store: bool=True,
         stream:bool=True
-        #**kwargs,
     ):
         # Retrive the history of the conversation with the user
         messages = self.history(memory)
         # If the memory is not all, insert the system prompt at the beginning of the messages
         if memory != "all":
-            messages.insert(0, dict(role="system", content=self.system_prompt.format(context=context)))
+            messages.insert(0, dict(role="system", content=self.system_prompt))
 
         # If the role is user, use the user prompt to generate the message
         if role == "user":
-            # If the user prompt is not given, use the default user prompt
-            if user_prompt is None:
-                user_prompt = self.user_prompt
-
-            current_message = user_prompt.format(query=query)
-
+            current_message = self.user_prompt.format(context=context,query=query)
             # If store is True, store the message in the history
         if store:
             self.store(role, current_message)
@@ -105,7 +106,10 @@ class Chatbot:
         if stream:
             return self._stream(messages)
         else:
-            return self._chat(messages)
+            message = self._chat(messages)
+            # Store the response in the history
+            self.store("assistant", message.response)
+            return message.response
 
     def reply(self,query):
         """Function for reply to the user input. Also it handle the necessary steps to build the answer"""

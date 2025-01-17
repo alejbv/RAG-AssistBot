@@ -1,56 +1,30 @@
-message_history = [
-    {
-        "role": "system",
-        "content": "You are a helpful assistant."
-    },
-    {
-        "role": "user",
-        "content": "Hello, who are you?"
-    },
-    {
-        "role": "assistant",
-        "content": "I am an AI created by OpenAI. How can I assist you today?"
-    },
-    {
-        "role": "user",
-        "content": "Can you help me with some programming questions?"
-    },
-    {
-        "role": "assistant",
-        "content": "Of course! What do you need help with?"
-    }
-]
+import re
+import json
+from pydantic import BaseModel
+
+class PromptFormat(BaseModel):
+    context: str
+    query: str
+    response: str
+    reasoning: str
+    references: str
+    feedback: str
+    response_length: int
+    error: str
 
 
-def history(memory: int):
-    if memory == 0:
-        return []
+to_json ={"context": "El contexto proporcionado incluye una lista de 17 formas de turismo diferentes, entre las que se encuentran el turismo de sol y playa, turismo cultural, turismo de reuniones, turismo deportivo, turismo náutico, turismo académico y científico, turismo de naturaleza, turismo de salud, turismo de negocios, viajes de incentivo, turismo de cruceros, turismo de intereses sociales, turismo de intercambio profesional, turismo religioso, turismo de hobbies, aficiones, turismo de bodas y lunas de miel, turismo de aventura y turismo de parques temáticos.",
+"error": "",
+"feedback": "",
+"query": "Cuales son las distintas formas de turismo",
+"reasoning": "El contexto proporcionado incluye una lista de 17 formas de turismo diferentes. Las formas de turismo mencionadas son: turismo de sol y playa, turismo cultural, turismo de reuniones, turismo deportivo, turismo náutico, turismo académico y científico, turismo de naturaleza, turismo de salud, turismo de negocios, viajes de incentivo, turismo de cruceros, turismo de intereses sociales, turismo de intercambio profesional, turismo religioso, turismo de hobbies, aficiones, turismo de bodas y lunas de miel, turismo de aventura y turismo de parques temáticos.",
+"references": "El contexto proporcionado no incluye referencias específicas.",
+"response": "Las distintas formas de turismo mencionadas son: turismo de sol y playa, turismo cultural, turismo de reuniones, turismo deportivo, turismo náutico, turismo académico y científico, turismo de naturaleza, turismo de salud, turismo de negocios, viajes de incentivo, turismo de cruceros, turismo de intereses sociales, turismo de intercambio profesional, turismo religioso, turismo de hobbies, aficiones, turismo de bodas y lunas de miel, turismo de aventura y turismo de parques temáticos."}
 
-    if memory == "all":
-        messages = message_history
-    else:
-        messages = message_history[-memory:]
-
-    return messages.copy()
-
-def submit(
-    query: str,
-    memory: int = "all",
-    role: str = "user",
-    store: bool = True,
-):
-    messages = history(memory)
-    if memory != "all":
-        messages.insert(0, dict(role="system", content="You are a helpful assistant."))
-
-    if store:
-        messages.append(dict(role=role, content=query))
-
-    print(messages)
+print(type(to_json))
 
 
-import tomli
-
-with open(".secrets/config.toml", 'rb') as f:
-    config = tomli.load(f)
-    print(config.BASE_URL)
+    
+    
+a =PromptFormat.model_validate(to_json)
+print(a.response)

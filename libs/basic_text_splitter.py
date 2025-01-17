@@ -24,8 +24,11 @@ class BasicTextSplitter(TextSplitter):
         """
         result = []
         count = 1
-        for document_id, document in documents.items():
+        document_id = 0
+        
+        for document in documents:
             # Split the document calling the private function __split_document for each document
+            document_id += 1
             chunks = self.__split_document(document['text'])
             
             chunk_metadata = {key: value for key, value in document['metadata'].items()}
