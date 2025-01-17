@@ -6,13 +6,10 @@ from prompts.prompt import *
 from pydantic import BaseModel
 
 class PromptFormat(BaseModel):
-    context: str
+    #context: str
     query: str
+    reasoning_steps: str
     response: str
-    reasoning: str
-    references: str
-    feedback: str
-    error: str
 
 
 
@@ -87,7 +84,6 @@ class Chatbot:
         memory:Union[int,str]="all",
         context: str="",
         role:  str="user",
-        user_prompt: str=None,
         store: bool=True,
         stream:bool=True
     ):
@@ -99,12 +95,7 @@ class Chatbot:
 
         # If the role is user, use the user prompt to generate the message
         if role == "user":
-            # If the user prompt is not given, use the default user prompt
-            if user_prompt is None:
-                user_prompt = self.user_prompt
-
-            current_message = user_prompt.format(context=context,query=query)
-
+            current_message = self.user_prompt.format(context=context,query=query)
             # If store is True, store the message in the history
         if store:
             self.store(role, current_message)

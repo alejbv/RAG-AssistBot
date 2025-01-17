@@ -1,9 +1,18 @@
 import json
 import requests
 import numpy as np
+import tomli
+import os
+
 
 EMBEDDING_MODEL = ""
 API_KEY = ""
+
+def load_data():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(dir_path,'conf.toml'), "rb") as f:
+        data = tomli.load(f)
+    return data
 
 def embed(texts):
     api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{EMBEDDING_MODEL}"
@@ -22,8 +31,6 @@ def embed(texts):
     
     return result
     
-
-
 def parse_json_string(json_string):
     """
     Parses a JSON string and attempts to fix common errors before loading it into a Python dictionary.
@@ -63,7 +70,6 @@ def parse_json_string(json_string):
         except json.JSONDecodeError as e:
             print(f"Failed to parse fixed JSON: {e}")
             return None
-
 
 
 if __name__ == "__main__":
