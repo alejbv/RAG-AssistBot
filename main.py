@@ -9,8 +9,8 @@ from libs.loaders.pdf_loader import PDFLoader
 from libs.splitters.basic_text_splitter import BasicTextSplitter
 
 # Prompt Tools
-from prompts.academic_assistant_prompt import system_prompt as academic_system_prompt
-from prompts.academic_assistant_prompt import user_prompt as academic_user_prompt
+from libs.prompts.academic_assistant_prompt import system_prompt as academic_system_prompt
+from libs.prompts.academic_assistant_prompt import user_prompt as academic_user_prompt
 
 # 1. Load, chunk and index the contents of the blog to create a retriever.
 # Load the documents
