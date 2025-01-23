@@ -1,12 +1,12 @@
 import streamlit as st
 # Retriever tools
-from libs.chatbot import Chatbot
-from libs.vector_retriever import VectorRetriever
-from libs.lexical_retriever import LexicalRetriever
-from libs.basic_document_storage import BasicStorage
-from libs.hybrid_retriever import HybridRetriever
-from libs.pdf_loader import PDFLoader
-from libs.basic_text_splitter import BasicTextSplitter
+from libs.agent.chatbot import Chatbot
+from libs.retrieval.vector_retriever import VectorRetriever
+from libs.retrieval.lexical_retriever import LexicalRetriever
+from libs.storage.basic_document_storage import BasicStorage
+from libs.retrieval.hybrid_retriever import HybridRetriever
+from libs.loaders.pdf_loader import PDFLoader
+from libs.splitters.basic_text_splitter import BasicTextSplitter
 
 # Prompt Tools
 from prompts.academic_assistant_prompt import system_prompt as academic_system_prompt

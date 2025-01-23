@@ -1,6 +1,6 @@
 import tomli
 from typing import Union,List,Dict
-from libs.hybrid_retriever import HybridRetriever
+from libs.retrieval.hybrid_retriever import HybridRetriever
 from huggingface_hub import InferenceClient
 from prompts.prompt import *
 from pydantic import BaseModel
