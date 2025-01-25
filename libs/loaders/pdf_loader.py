@@ -1,10 +1,9 @@
-from pathlib import Path
 from typing import Set,Dict,List
 from pypdf import PdfReader
 from io import BytesIO
-from libs.abstract_models.document_loader import DocumentLoader
+from libs.abstract_models.file_loader import FileLoader
 
-class PDFLoader(DocumentLoader):
+class PDFLoader(FileLoader):
     def __init__(self, data_path: str = "source/", file_filter: Set[str] = None):
         # Call the parent constructor with the data_path and file_filter
         super().__init__(data_path, file_filter)

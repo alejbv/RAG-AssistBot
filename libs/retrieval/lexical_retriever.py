@@ -72,16 +72,6 @@ class LexicalRetriever(Retriever):
         # Second: Get top-k results as a tuple of (doc ids, scores). Both are arrays of shape (n_queries, k)
         results, scores = self.retriever.retrieve(query_tokens, k=k)
         return results[0],scores[0]
-
-    
-    
-if __name__ == '__main__':
-    from spacy.lang.es.examples import sentences 
-    #store = LexicalRetriever()
-    #store.add(sentences)
-    for i in range(0,6):
-        print(sentences[i])
-    #print(store.search([sentences[1]],k=5))
     
     
     

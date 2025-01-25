@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-
+from libs.loaders.postgres_loader import PostgresLoader
 class PromptFormat(BaseModel):
     context: str
     query: str
@@ -23,6 +23,7 @@ print(type(to_json))
 
 
     
+pg_loader = PostgresLoader()
+
+pg_loader.load_data()
     
-a =PromptFormat.model_validate(to_json)
-print(a.response)
