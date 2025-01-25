@@ -5,7 +5,7 @@ from io import BytesIO
 from libs.abstract_models.document_loader import DocumentLoader
 
 class PDFLoader(DocumentLoader):
-    def __init__(self, data_path: str = "data/", file_filter: Set[str] = None):
+    def __init__(self, data_path: str = "source/", file_filter: Set[str] = None):
         # Call the parent constructor with the data_path and file_filter
         super().__init__(data_path, file_filter)
         # Setting the variable for the instance
