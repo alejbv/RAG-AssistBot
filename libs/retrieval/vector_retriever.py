@@ -15,7 +15,7 @@ class VectorRetriever(Retriever):
         # Loading the configuration file
         with open(".secrets/config.toml", 'rb') as f:
             config = tomli.load(f)            
-            self.client = OpenAI(base_url=config["BASE_URL"],api_key=config["EMBEDDING_API_KEY"])
+            self.client = OpenAI(base_url=config["BASE_URL"],api_key=config["API_KEY"])
             self.model = config["EMBEDDING_MODEL"]
 
     def embed(self,documents: List[str]):
@@ -24,14 +24,32 @@ class VectorRetriever(Retriever):
             for doc in documents:            
                 response = self.client.embeddings.create(
                             input=[doc],
-                            model=self.model,)
+                            model=self.model,
+                            dimensions=self.d#1536  
+                            )
 
                 embeddings.append(response.data[0].embedding)
         except Exception as e:
-            print(doc)
+            print(e)
             
+        return np.array(embeddings)    
+    #TODO: Revisar que funcione: Este metodo no funciona con el embedding que se esta usando(nomic)
+    def batch_embed(self,documents: List[str],batch_size=300):
+        embeddings = []
+        try:
+            for rng in range(len(documents),batch_size):
+                docs = documents[rng:rng+batch_size]
+                # Aqui deberia ir otra api de infenercia o otro modelo
+                response = self.client.embeddings.create(
+                            input=docs,
+                            model=self.model,
+                            dimensions=self.d#1536
+                            )
+                embeddings.extend([np.asarray(d.embedding) for d in response.data])
+        except Exception as e:
+            print(e)
+        
         return np.array(embeddings)
-    
         
     def add(self, documents: List[str]):
         """Function for adding new document to the index

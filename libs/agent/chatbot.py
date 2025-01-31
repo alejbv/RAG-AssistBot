@@ -1,8 +1,9 @@
 import tomli
+from openai import OpenAI
+
 from typing import Union,List,Dict
 from libs.retrieval.hybrid_retriever import HybridRetriever
-from huggingface_hub import InferenceClient
-from prompts.prompt import *
+from libs.prompts.prompt import *
 from pydantic import BaseModel
 
 class PromptFormat(BaseModel):
@@ -26,9 +27,12 @@ class Chatbot:
         # LLM Tools
         with open(".secrets/config.toml", 'rb') as f:
             config = tomli.load(f)
-            self.client = InferenceClient(model=config["INFERENCE_MODEL"],
-                                          token=config["INFERENCE_API_KEY"]
-                                        )
+            self.client = OpenAI(
+                                 base_url=config["BASE_URL"],   
+                                 api_key=config["API_KEY"]
+                                )
+        
+        self.model = config["INFERENCE_MODEL"],
         # Prompting Tools
         self.system_prompt = system_prompt
         self.user_prompt = user_prompt
@@ -66,7 +70,8 @@ class Chatbot:
 
     def _chat(self, messages: List[Dict]):
         response = (
-            self.client.chat.completions.create(
+            self.client.completions.create(
+                model=self.model,
                 messages=messages,
                 max_tokens=2400,
                 temperature=0.4,
