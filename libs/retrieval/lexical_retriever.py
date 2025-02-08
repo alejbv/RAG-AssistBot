@@ -42,7 +42,7 @@ class LexicalRetriever(Retriever):
         return corpus_tokens
     
     def add(self, documents: List[str]):
-        """ Function por add a new set of documents to the corpus
+        """ Function for add a new set of documents to the corpus
         Args:
             documents (List[Dict]): The list of new documents to add to the corpus
         """
@@ -51,9 +51,6 @@ class LexicalRetriever(Retriever):
         
         # Second: Indexing the corpus in the BM25 model
         self.retriever.index(corpus_tokens)
-        
-        # Last: Extend the currente dataset
-        #self._data.extend(documents)
 
     def search(self, queries: List[str], k: int=20) -> Tuple[List,List]:
         """Function for searching given a query a set of document similar to that query

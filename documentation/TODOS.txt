@@ -1,0 +1,17 @@
+### TODOS 1
+1-  Proceso de limpieza de los documentos. Comprobar si con el sumary es suficiente para la busqueda
+1*- Explorar con diversos metodos de chunking(Ver si se puede mejorar los chunking con contextual embedding)
+2-  Explorar las distintas bases de datos para hybrid search(Milvu, Chroma, Elastic, Mongo, Pinecone)
+3- Explorar un Self-Query(Lograr un comportamiento de agente en el modelo)De forma tal que se sepa todos los datos iniciales
+que se deben buscar en una query y una vez recuperados y filtrados los datos saber si es necesario buscar mas datos
+4- Explorar cross encoder
+
+
+
+### Extras
+1- Ver como serializar todos los datos(en especial los embeddings) para no tener que generarlos cada vez se levante el bot
+3*-Hacer que se recupere documentos por filtro
+
+### Resulto
+^1- Configurar el DocumentStorage para que utilize redis para almacenar documentos
+^2- Modificar los retrievers para que devuelvan ids de documentos y no posiciones(FAISS y ver como con BM25)(Se resolvio con DocumentStore llevando el mapeo)

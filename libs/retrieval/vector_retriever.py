@@ -9,8 +9,8 @@ class VectorRetriever(Retriever):
     def __init__(self,d:int = 768, nlist:int = 25) -> None:
         self.d = d
         self.nlist=nlist
-        self._quantizer = IndexFlatIP(self.d)  # the other index
-        self._index = IndexIVFFlat(self._quantizer, self.d, self.nlist)
+        self.base_index = IndexFlatIP(self.d)  # the other index
+        self.index = IndexIVFFlat(self.base_index, self.d, self.nlist)
         
         # Loading the configuration file
         with open(".secrets/config.toml", 'rb') as f:
@@ -57,13 +57,13 @@ class VectorRetriever(Retriever):
         Args:
             documents (List[Dict]): A list of document to extend the index for retrieval
         """
+        # Get the document embedding
         embeddings = self.embed(documents)
+    
+        if not self.index.is_trained:
+            self.index.train(embeddings)
         
-        if not self._index.is_trained:
-            self._index.train(embeddings)
-        
-        self._index.add(embeddings)
-        #self._data.extend(documents)
+        self.index.add(embeddings)
         
     def search(self, queries: List[str], k: int=20, nprobe: int=5)-> Tuple[List,List]:
         """Function for retrieving a list of document that match the given queries
@@ -79,8 +79,7 @@ class VectorRetriever(Retriever):
         # Get the document embedding
         query_embedding = self.embed(queries)
         # Find the closest K vectors
-        self._index.nprobe=nprobe
-        score,idx = self._index.search(query_embedding,k=k)
-        # Retrieve the corresponding texts
-        #return [self._data[i] for i in idx[0]],score
+        self.index.nprobe=nprobe
+        score,idx = self.index.search(query_embedding,k=k)
+        # Retrieve the corresponding ids
         return idx[0],score[0]

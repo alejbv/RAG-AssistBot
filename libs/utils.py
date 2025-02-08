@@ -2,6 +2,8 @@ import json
 import requests
 import numpy as np
 import tomli
+import re
+
 import os
 
 
@@ -71,7 +73,39 @@ def parse_json_string(json_string):
             print(f"Failed to parse fixed JSON: {e}")
             return None
 
+def find_matches_with_positions(text):
+    """ Find all matches of a pattern in a text and return their positions. This method is for cleaning the text.
+    Args:
+        text (str): The text to search for matches.
 
+    Returns:
+        str: The cleaned text.
+    """
+    # Use re.finditer to get all matches
+    pattern = r"_+"
+    matches = re.finditer(pattern, text)
+    
+    # Iterate through the matches and extract the information
+    positions = []
+    for match in matches:
+        start = match.start()  # Start index of the match
+        end = match.end()      # End index of the match
+        substring = match.group()  # Substring that matches the pattern
+        positions.append((substring, start, end))
+    
+     # Print the results
+    #for substring, start, end in positions:
+    #    print(f"Substring: '{substring}', Start: {start}, End: {end}")
+    
+    if len(positions)>= 2:
+        return text[positions[0][2]:positions[1][1]]
+    
+    elif len(positions)==1:
+        return text[:positions[0][1]]
+    
+    else:
+        return text
+    
 if __name__ == "__main__":
     # Example usage:
     json_response = "{'name': 'John', 'age': 30, 'city': 'New York',}"

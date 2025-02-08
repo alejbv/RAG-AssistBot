@@ -7,7 +7,7 @@ from typing import List,Dict
 # 3. Semantic
 # 4. Character
 class BasicTextSplitter(TextSplitter):
-    def __init__(self,chunk_size: int = 250 , overlap: int= 50) -> None:
+    def __init__(self,chunk_size: int = 512 , overlap: int= 20) -> None:
         self.chunk_size = chunk_size
         self.overlap = overlap
         
@@ -35,6 +35,7 @@ class BasicTextSplitter(TextSplitter):
             # Save the chunks
             for i, chunk in enumerate(chunks):
                 result.append({
+                    'id': f"{document_id}-{i}",
                     'text': chunk,
                     'document_id': document_id,
                     'chunk_id': i,

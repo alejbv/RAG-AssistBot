@@ -1,4 +1,19 @@
 # Cómo funciona el RAG tradicional
+Un flujo de trabajo típico de RAG suele contener varios pasos de procesamiento intermedios: 
+
+**Clasificación de consultas**: determinar si la recuperación es necesaria para una consulta de entrada determinada
+
+**Recuperación**: obtener de forma eficiente los documentos relevantes para la consulta 
+
+**Reclasificación**:refinar el orden de los documentos recuperados en función de su relevancia para la consulta 
+
+**Reempaquetado**:organizar los documentos recuperados en uno estructurado para una mejor generación 
+
+**Resumen**:extraer información clave para la generación de respuestas del documento reempaquetado y eliminar redundancias 
+
+La implementación de RAG también requiere decisiones sobre las formas de dividir correctamente los documentos en fragmentos, los tipos de embeddings que se utilizarán para representar semánticamente estos fragmentos, la elección de
+bases de datos vectoriales para almacenar de manera eficiente representaciones de features y métodos para ajustar eficazmente los LLM
+
 
 El RAG tradicional funciona según un principio sencillo:
 
@@ -7,6 +22,7 @@ El RAG tradicional funciona según un principio sencillo:
 **Prompt Augmentation**: la información recuperada se incorpora a la indicación para un modelo de lenguaje amplio (LLM).
 
 **Generación de respuesta**: el LLM utiliza la indicación enriquecida para generar una respuesta, normalmente una respuesta a la pregunta del usuario
+
 
 # Puntos necesarios para generar el RAG
 A su vez el funcionamiento adecuado de un RAG depende de la correcta implementación  de sus 4 operaciones principales: 

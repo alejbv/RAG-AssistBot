@@ -19,6 +19,8 @@ class HybridRetriever:
             documents (List[Dict]): The list of each of the document to be stored for retrieval
         """
        
+        self.document_index.add_documents(documents)
+        
         texts = [document['text'] for document in documents]
         # Creating the processes for concurrently add the documents to each of the retrievers
         for retriever in self.retrievers_list:
