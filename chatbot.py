@@ -1,8 +1,8 @@
-import tomli
 from openai import OpenAI
-
 from typing import Union,List,Dict
-from libs.retrieval.hybrid_retriever import HybridRetriever
+from pymilvus import Collection
+from retrieval_tools import dense_search #, sparse_search, hybrid_search
+from utils import load_config, get_embeddings
 from libs.prompts.prompt import *
 from pydantic import BaseModel
 
@@ -13,24 +13,22 @@ class PromptFormat(BaseModel):
     response: str
 
 
-
 class Chatbot:
     def __init__(
         self,
-        retriever: HybridRetriever,
+        collection: Collection,
         system_prompt: str = DEFAULT_SYSTEM_PROMPT,
         user_prompt:   str = DEFAULT_USER_PROMPT,
     ) -> None:
         # Retrieve Tools
-        self.retriever = retriever
+        self.collection = collection
         
         # LLM Tools
-        with open(".secrets/config.toml", 'rb') as f:
-            config = tomli.load(f)
-            self.client = OpenAI(
-                                 base_url=config["BASE_URL"],   
-                                 api_key=config["API_KEY"]
-                                )
+        config = load_config()
+        self.client = OpenAI(
+                             base_url=config["BASE_URL"],   
+                             api_key=config["API_KEY"]
+                            )
         
         self.model = config["INFERENCE_MODEL"],
         # Prompting Tools
@@ -60,8 +58,7 @@ class Chatbot:
 
     def _stream(self, messages: List[Dict]):
         result = []
-
-        for chunk in self.client.chat.completions.create(messages=messages,max_tokens=256,temperature=0.4,stream=True):
+        for chunk in self.client.chat.completions.create(messages=messages, max_tokens=2400, temperature=0.4, stream=True):
             text = chunk.choices[0].delta.content
             result.append(text)
             yield text
@@ -70,7 +67,7 @@ class Chatbot:
 
     def _chat(self, messages: List[Dict]):
         response = (
-            self.client.completions.create(
+            self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 max_tokens=2400,
@@ -119,8 +116,8 @@ class Chatbot:
     def reply(self,query):
         """Function for reply to the user input. Also it handle the necessary steps to build the answer"""
         # First: Retrieve the context
-        retrieved_chunkst = self.retriever.search(query)
+        retrieved_chunks = dense_search(self.collection, get_embeddings([query])[0])
         #Get only the text context
-        context = ''.join([chunk['text'] for chunk in retrieved_chunkst])
+        context = ''.join([chunk['text'] for chunk in retrieved_chunks])
         # Last : Generate a response for the user using the given context
         return self.submit(query,store=True,context=context,stream=False)

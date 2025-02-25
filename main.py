@@ -1,6 +1,6 @@
 import streamlit as st
 # Retriever tools
-from libs.agent.chatbot import Chatbot
+from chatbot import Chatbot
 from libs.retrieval.vector_retriever import VectorRetriever
 from libs.retrieval.lexical_retriever import LexicalRetriever
 from libs.storage.basic_document_storage import BasicStorage

@@ -1,0 +1,21 @@
+[project]
+name = "chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "babel>=2.17.0",
+    "numpy>=2.2.3",
+    "openai>=1.63.0",
+    "psycopg>=3.2.4",
+    "pydantic>=2.10.6",
+    "pymilvus>=2.5.4",
+    "ruff>=0.9.6",
+    "tomli>=2.2.1",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+]

@@ -1,38 +1,54 @@
 import json
-import requests
-import numpy as np
 import tomli
-import re
+import numpy as np
+from openai import OpenAI
+from typing import List
 
-import os
 
+def load_client():
+    with open(".secrets/config.toml", 'rb') as f:
+        config = tomli.load(f)   
+        client = OpenAI(base_url=config["BASE_URL"],api_key=config["API_KEY"])
+        model = config["EMBEDDING_MODEL"]
+        dimension = config["EMBEDDING_DIMENSION"]
+        
+    return client,model,dimension
 
-EMBEDDING_MODEL = ""
-API_KEY = ""
-
-def load_data():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    with open(os.path.join(dir_path,'conf.toml'), "rb") as f:
-        data = tomli.load(f)
-    return data
-
-def embed(texts):
-    api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{EMBEDDING_MODEL}"
-    headers = {"Authorization": f"Bearer {API_KEY}"}
-    # Si no hay problemas con el tiempo de espera cuando se hace la solicitud
+def embed(documents: List[str]):
+    client,model,dimension = load_client()
+    embeddings = []
     try:
-        response = requests.post(api_url, headers=headers, json={"inputs": texts, "options":{"wait_for_model":True}})
-        result = np.array(response.json()).astype(np.float32)
-    
-    # Si hay un límite con la cantidad de solicitudes
+        for doc in documents:            
+            response = client.embeddings.create(
+                        input=[doc],
+                        model=model,
+                        dimensions=dimension#1536  
+                        )
+            embeddings.append(response.data[0].embedding)
     except Exception as e:
-        m = len(texts)
-        first_half = embed(texts[:m])
-        second_half = embed(texts[m:])
-        result = np.concatenate([first_half,second_half])
+        print(e)
+        
+    return np.array(embeddings)    
+
+#TODO: Revisar que funcione: Este metodo no funciona con el embedding que se esta usando(nomic)
+def batch_embed(documents: List[str],batch_size=300):
+    client,model,dimension = load_client()
+    embeddings = []
+    try:
+        for rng in range(len(documents),batch_size):
+            docs = documents[rng:rng+batch_size]
+            # Aqui deberia ir otra api de infenercia o otro modelo
+            response = client.embeddings.create(
+                        input=docs,
+                        model=model,
+                        dimensions=dimension#1536
+                        )
+            embeddings.extend([np.asarray(d.embedding) for d in response.data])
+    except Exception as e:
+        print(e)
     
-    return result
-    
+    return np.array(embeddings)
+
 def parse_json_string(json_string):
     """
     Parses a JSON string and attempts to fix common errors before loading it into a Python dictionary.
@@ -72,40 +88,7 @@ def parse_json_string(json_string):
         except json.JSONDecodeError as e:
             print(f"Failed to parse fixed JSON: {e}")
             return None
-
-def find_matches_with_positions(text):
-    """ Find all matches of a pattern in a text and return their positions. This method is for cleaning the text.
-    Args:
-        text (str): The text to search for matches.
-
-    Returns:
-        str: The cleaned text.
-    """
-    # Use re.finditer to get all matches
-    pattern = r"_+"
-    matches = re.finditer(pattern, text)
-    
-    # Iterate through the matches and extract the information
-    positions = []
-    for match in matches:
-        start = match.start()  # Start index of the match
-        end = match.end()      # End index of the match
-        substring = match.group()  # Substring that matches the pattern
-        positions.append((substring, start, end))
-    
-     # Print the results
-    #for substring, start, end in positions:
-    #    print(f"Substring: '{substring}', Start: {start}, End: {end}")
-    
-    if len(positions)>= 2:
-        return text[positions[0][2]:positions[1][1]]
-    
-    elif len(positions)==1:
-        return text[:positions[0][1]]
-    
-    else:
-        return text
-    
+  
 if __name__ == "__main__":
     # Example usage:
     json_response = "{'name': 'John', 'age': 30, 'city': 'New York',}"
