@@ -1,0 +1,22 @@
+name: llm-tools
+
+services:
+  fastapi:
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      - ./fastapi:/app
+
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: Dockerfile
+    depends_on:
+      - fastapi
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./streamlit:/app

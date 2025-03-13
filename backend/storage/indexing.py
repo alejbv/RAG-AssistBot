@@ -1,4 +1,4 @@
-from utils import load_data, load_collection, process_documents
+from backend.storage.utils import load_data, load_collection, process_documents
 from tqdm import tqdm 
 # Load the data from the database
 print("### Loading the data ###")

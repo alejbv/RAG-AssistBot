@@ -1,0 +1,10 @@
+pymongo
+motor
+numpy
+tomli
+fastapi[all]
+uvicorn[all]
+pydantic
+starlette
+openai
+aiostream>=0.4.5

@@ -18,7 +18,7 @@ def load_config() -> Dict:
     """Load the configuration necessary for the application.
 
     Returns:
-        Dict: The cnfiguration data.
+        Dict: The configuration data.
     """
     with open(".secrets/config.toml", 'rb') as f:
         config = tomli.load(f)   
@@ -67,8 +67,8 @@ def load_collection() -> Collection:
         # Use the documents id as primary key
             FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=100),
             FieldSchema(name="name", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=1024),
-            FieldSchema(name="summary", dtype=DataType.VARCHAR, max_length=512),
+            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=32768),
+            FieldSchema(name="summary", dtype=DataType.VARCHAR, max_length=16384),
             FieldSchema(name="organism", dtype=DataType.VARCHAR, max_length=256),
             FieldSchema(name="state", dtype=DataType.VARCHAR, max_length=256),
             FieldSchema(name="year", dtype=DataType.INT32),
@@ -158,39 +158,6 @@ def process_documents(doc:Dict) -> Dict:
     
     return new_doc
 
-## Methods for tokenizing and embedding the data
-# def tokenize(documents: List[str]):
-#     """Tokenize the documents using the spaCy library.
-#     Args:
-#         documents (List[Dict]): List of documents for tokenize
-#     Returns:
-#         List[List[str]]: List of tokenized documents
-#     """
-#     # Setting the variables
-#     nlp = spacy.load("es_core_news_sm")
-#     stopwords = set(nltk.corpus.stopwords.words('spanish'))
-    
-#     # Filters   
-#     filter_punctuation = partial(filter,lambda token: not token.is_punct)
-#     filter_stopwords = partial(filter,lambda token: token.lemma_ not in stopwords)
-    
-#     # Function for converting spacy.Token to str
-#     converter = partial(map,lambda token: token.lemma_)
-    
-#     # First: tokenize the corpus
-#     tokens = [[token for token in nlp(document.lower())] for document in documents]
-    
-#     # Second: remove the punctuation sings
-#     no_punctuation = [list(filter_punctuation(tokens)) for tokens in tokens]    
-    
-#     # Third: remove the stopwords
-#     no_stopwords   = [list(filter_stopwords(tokens)) for tokens in no_punctuation]
-    
-#     # Fourth: convert the tokens to string
-#     corpus_tokens   = [list(converter(tokens))  for tokens in no_stopwords]
-    
-#     return corpus_tokens
-
 def get_embeddings(documents: List[str]) -> List[np.ndarray]:
     # Loading configutation for embeddings
     config = load_config()
@@ -251,3 +218,22 @@ def summarize_document(text):
 
     except Exception as e:
         return f"Error generating summary: {e}"
+
+
+def basic_text_split(text: str, max_length: int = 256, overlap=20) -> List[str]:
+    """Split the text into chunks of a given length. 
+
+    Args:
+        text (str): The text to split
+        max_length (int, optional): The max size of each chunk. Defaults to 256.
+        overlap (int, optional): The overlap between chunk. Defaults to 20.
+
+    Returns:
+        List[str]: The list of chunks of text.
+    """
+    chunks = []
+    tokens = text.split()
+    for i in range(0, len(tokens), max_length - overlap):
+        chunk = ' '.join(tokens[i:i + max_length])
+        chunks.append(chunk)
+    return chunks

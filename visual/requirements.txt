@@ -1,0 +1,5 @@
+tqdm
+pypdf
+requests
+streamlit
+streamlit-core
