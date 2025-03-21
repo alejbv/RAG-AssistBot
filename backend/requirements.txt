@@ -1,5 +1,4 @@
-pymongo
-motor
+pymilvus
 numpy
 tomli
 fastapi[all]

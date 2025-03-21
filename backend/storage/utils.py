@@ -20,7 +20,7 @@ def load_config() -> Dict:
     Returns:
         Dict: The configuration data.
     """
-    with open(".secrets/config.toml", 'rb') as f:
+    with open("../.secrets/config.toml", 'rb') as f:
         config = tomli.load(f)   
     return config
 
@@ -79,7 +79,7 @@ def load_collection() -> Collection:
             FieldSchema(name="gazette", dtype=DataType.VARCHAR, max_length=256),
             # The vectors for hybrid retrieval
             #FieldSchema(name="sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR),
-            FieldSchema(name="dense_vector", dtype=DataType.FLOAT_VECTOR, dim=config["EMBEDDING_DIMENSION"]),
+            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=config["EMBEDDING_DIMENSION"]),
         ]
 
         # Create the collection schema
@@ -90,7 +90,7 @@ def load_collection() -> Collection:
         #sparse_index = {"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"}
         #col.create_index("sparse_vector", sparse_index)
         dense_index = {"index_type": "AUTOINDEX", "metric_type": "IP"}
-        col.create_index("dense_vector", dense_index)
+        col.create_index("search_index", dense_index)
 
     else:
         # Load the existing collection

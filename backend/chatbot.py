@@ -1,25 +1,20 @@
-from tqdm.auto import tqdm
 from openai import AsyncOpenAI
-from typing import Union,List,Dict, Callable
+from typing import Union,List,Dict
 from backend.storage.collection import Collection
 
 class Chatbot:
     def __init__(
         self,
-        system_prompt: str,
-        user_prompt:   str,
-        base_url: str,
-        api_key: str,
-        inference_model: str,
-        embedding_model: str,
+        system_prompt:    str,
+        user_prompt:      str,
+        base_url:         str,
+        api_key:          str,
+        inference_model:  str,
+        embedding_model:  str,
         vector_dimension: int,
-        text_split:    Callable,
-        collection: Collection
+        collection:       Collection,
     ) -> None:
-        
-        # Load config data
-        self.text_split = text_split
-        
+                
         # DATABASE: MongoDB
         self.collection = collection
          
@@ -42,7 +37,7 @@ class Chatbot:
         
     
     
-    def store(self, role: str, content:str):
+    def store(self, role: str, content: str):
         self.message_history.append(dict(role=role, content=content))
 
     def history(self, memory: Union[int,str]):
@@ -56,7 +51,7 @@ class Chatbot:
 
         return messages.copy()
 
-    async def get_embeddings(self,documents:List[str]) -> List[float]:
+    async def get_embeddings(self,documents: List[str]) -> List[float]:
         """Generate embeddings for the given documents using OpenAI's API.
 
         Args:
@@ -78,14 +73,12 @@ class Chatbot:
             print(f"Error in get_embedding: {e}")
             return None
             
-    
-    async def store_file(self,data:Dict):
+    async def store_file(self,data: Dict):
         """Function to store the file in the database"""
         
         embedding = await self.get_embeddings([data["summary"]])[0]
         data["embedding"] = embedding
         
-        # Store the data in the database
         try:
             await self.collection.insert([data])
             print("File Stored")
@@ -93,20 +86,17 @@ class Chatbot:
         except Exception as e:
             print(f"Error in store_file: {e}")
         
-    async def retrieve_context(self,query:str, limit: int=10):
-        """Function to retrieve the file from the database"""
+    async def retrieve_context(self,query: str, limit: int=10):
+        """Function to retrieve the files from the database"""
         # Get the embeddings of the query
-        query_embedding = await self.get_embeddings([query])
-        
-
+        query_embedding = await self.get_embeddings([query])[0]
         # Execute the pipeline to retrieve the chunks
         retrieved_chunks = await self.collection.search(query_embedding,limit=limit)
         return  ''.join([chunk['text'] for chunk in retrieved_chunks])
     
-    async def _stream(self, messages: List[Dict]):
+    async def _stream(self, messages: List[Dict], store: bool):
         try:
             result = []
-            print("Changes Make")
             response = await self.client.chat.completions.create(
                                     messages=messages,
                                     model=self.inference_model,
@@ -115,7 +105,6 @@ class Chatbot:
                                     stream=True
                                 )
 
-            print("Client Ready")
             async for chunk in response :
                 text = chunk.choices[0].delta.content
                 
@@ -127,8 +116,9 @@ class Chatbot:
                 result.append(current_output)
 
                 yield current_output
-
-            self.store("assistant", "".join(result))
+            
+            if store:
+                self.store("assistant", "".join(result))
         
         except Exception as e:
             print(f"Error in _stream: {e}")
@@ -136,10 +126,10 @@ class Chatbot:
             
     async def reply(
         self,
-        query: str,
-        memory:Union[int,str]="all",
-        role:  str="user",
-        store: bool=True,
+        query:  str,
+        memory: Union[int,str]="all",
+        role:   str="user",
+        store:  bool=True,
     ):
         """Function to generate the response to a query
 
@@ -169,5 +159,5 @@ class Chatbot:
         # Append the user message to the messages
         messages.append(dict(role=role, content=current_message))
         
-        return self._stream(messages)
+        return self._stream(messages,store)
     
