@@ -5,14 +5,6 @@ import numpy as np
 from openai import OpenAI
 from psycopg.rows import dict_row
 from typing import List, Iterable, Dict
-from pymilvus import (
-    connections,    
-    utility,
-    FieldSchema,
-    CollectionSchema,
-    DataType,
-    Collection,
-)
 ## Methods for loading the data and configuration
 def load_config() -> Dict:
     """Load the configuration necessary for the application.
@@ -46,61 +38,6 @@ def load_data() -> Iterable[Dict]:
         cursor.execute("SELECT * from biblioteca_normativa;")        
         return cursor.fetchall()       
     
-def load_collection() -> Collection:
-    """Load the collection from the Milvus database. If the collection does not exist, it will be created.
-
-    Returns:
-        Collection: The collection object.
-    """
-    config = load_config()
-    
-    # Connect to the database
-    connections.connect(
-        uri=config["MILVUS_URI"],
-        token=config["MILVUS_API_KEY"],
-    )
-    
-    # Check of collection exist. If not create collection
-    if not utility.has_collection(config["MILVUS_COLLECTION_NAME"]):
-        # Specify the data schema for the new Collection
-        fields = [
-        # Use the documents id as primary key
-            FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=100),
-            FieldSchema(name="name", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=32768),
-            FieldSchema(name="summary", dtype=DataType.VARCHAR, max_length=16384),
-            FieldSchema(name="organism", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="state", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="year", dtype=DataType.INT32),
-            FieldSchema(name="normtype", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="number", dtype=DataType.INT32),
-            FieldSchema(name="read_count", dtype=DataType.INT32),
-            FieldSchema(name="slug", dtype=DataType.VARCHAR, max_length=256),
-            FieldSchema(name="gazette", dtype=DataType.VARCHAR, max_length=256),
-            # The vectors for hybrid retrieval
-            #FieldSchema(name="sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR),
-            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=config["EMBEDDING_DIMENSION"]),
-        ]
-
-        # Create the collection schema
-        schema = CollectionSchema(fields)
-        # Create the collection with the schema
-        col = Collection(config["MILVUS_COLLECTION_NAME"], schema, consistency_level="Strong")
-        # To make vector search efficient, we need to create indices for the vector fields
-        #sparse_index = {"index_type": "SPARSE_INVERTED_INDEX", "metric_type": "IP"}
-        #col.create_index("sparse_vector", sparse_index)
-        dense_index = {"index_type": "AUTOINDEX", "metric_type": "IP"}
-        col.create_index("search_index", dense_index)
-
-    else:
-        # Load the existing collection
-        col = Collection(config["MILVUS_COLLECTION_NAME"])
-    
-    # Load the data from the database
-    col.load()
-    
-    return col
-
 ## Methods for cleaning and preprocessing the data
 def __process_text(text:str) -> str:
     """Find all matches of a pattern in a text and return the correct form of the text. This method is for cleaning the text.
@@ -132,7 +69,7 @@ def __process_text(text:str) -> str:
     else:
         return text    
 
-def process_documents(doc:Dict) -> Dict:
+def process_document(doc:Dict) -> Dict:
     """Preprocess the document for indexing. This method will clean the text and generate the embeddings for the summary.
 
     Args:
@@ -144,6 +81,7 @@ def process_documents(doc:Dict) -> Dict:
     # Cleaning the text    
     new_doc = doc.copy()
     new_doc["text"] = __process_text(new_doc["text"])
+    
     # Processing the summary
     if new_doc["summary"] != "":
         new_doc["dense_vector"] =  get_embeddings([new_doc["summary"]])[0]
@@ -156,6 +94,7 @@ def process_documents(doc:Dict) -> Dict:
     else:
         new_doc = None
     
+    # Checkin if the document text have the right size
     return new_doc
 
 def get_embeddings(documents: List[str]) -> List[np.ndarray]:
@@ -172,9 +111,10 @@ def get_embeddings(documents: List[str]) -> List[np.ndarray]:
             response = client.embeddings.create(
                         input=[doc],
                         model=model,
-                        dimensions=dimension#1536  
-                        )
+                        dimensions=dimension
+                    )        
             embeddings.append(response.data[0].embedding)
+    
     except Exception as e:
         print(e)
         
@@ -231,9 +171,6 @@ def basic_text_split(text: str, max_length: int = 256, overlap=20) -> List[str]:
     Returns:
         List[str]: The list of chunks of text.
     """
-    chunks = []
+    
     tokens = text.split()
-    for i in range(0, len(tokens), max_length - overlap):
-        chunk = ' '.join(tokens[i:i + max_length])
-        chunks.append(chunk)
-    return chunks
+    return [" ".join(tokens[i:i + max_length])for i in range(0, len(tokens), max_length - overlap)]

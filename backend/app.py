@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from models import ResolutionRequest, QueryRequest
 from fastapi.responses import StreamingResponse
-from backend.storage.collection import Collection
-from backend.storage.utils import load_config, basic_text_split
+from storage.collection import Collection
+from storage.utils import load_config
 from prompt import DEFAULT_SYSTEM_PROMPT,DEFAULT_USER_PROMPT
 
 # Create the FastAPI app with a lifespan event handler to create the search index on startup    
@@ -20,8 +20,8 @@ async def lifespan(app: FastAPI):
     # Getting the collection
     collection = Collection(
                             uri=config["MILVUS_URI"],
-                            token=config["MILVUS_API_KEY"], 
-                            collection_name=config["MILVUS_COLLECTION"], 
+                            token=config["MILVUS_TOKEN"], 
+                            collection_name=config["MILVUS_COLLECTION_NAME"], 
                             dimension=config["EMBEDDING_DIMENSION"]
                         )
     
@@ -38,7 +38,6 @@ async def lifespan(app: FastAPI):
         inference_model=config["INFERENCE_MODEL"],
         embedding_model=config["EMBEDDING_MODEL"],
         vector_dimension=config["EMBEDDING_DIMENSION"],
-        text_split=basic_text_split,
         collection=collection
         )
     

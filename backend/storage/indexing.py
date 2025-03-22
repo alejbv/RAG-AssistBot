@@ -1,8 +1,8 @@
-from utils import load_data, load_config, process_documents
-from collection import Collection
-from tqdm import tqdm 
-from sys import exit
 import asyncio
+from tqdm import tqdm 
+from collection import Collection
+from utils import load_data, load_config, process_document
+
 # Load the collection
 print("### Loading the collection ###")
 conf = load_config()
@@ -12,27 +12,24 @@ loop = asyncio.get_event_loop()
 loop.run_until_complete(collection.initialize_collection())
 loop.close()
 
-exit(0)
-
 # Load the data from the database
 print("### Loading the data ###")
 documents = load_data()
 
 # Preprocess the data before indexing
 print("### Preparing the data ###")
-data = []
 
+data = []
 for doc in tqdm(documents, desc="Creating documents"):
-    new_doc= process_documents(doc)
-    if new_doc:
-        data.append(new_doc)
+    new_docs = process_document(doc)
+    if new_docs is not None:
+        data.extend(new_docs)
 
 # Insert the data into the collection
 print("### Inserting the data in the collection ###")
 
 size_step = int(len(data)*0.2)
 for i in tqdm(range(0, len(data), size_step), desc="Inserting data"):
-    min_step = min(i+size_step, len(data))
-    collection.insert(data[i:min_step])
+    collection.insert(data[i:size_step])
 
 print("### Done ###")

@@ -1,7 +1,40 @@
 name: chatbot
 
 services:
+  milvus:
+    image: milvusdb/milvus:latest
+    container_name: milvus
+    
+    security_opt:
+    - seccomp:unconfined
+    
+    environment:
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
+      COMMON_STORAGETYPE: local
+    
+    volumes:
+      - ./milvus/volumes/milvus:/var/lib/milvus
+      - ./milvus/embedEtcd.yaml:/milvus/configs/embedEtcd.yaml
+      - ./milvus/user.yaml:/milvus/configs/user.yaml
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+      - "2379:2379"
+    
+    command: ["milvus", "run", "standalone"]
+
   postgres:
+    container_name: postgres
     image: pgvector/pgvector:pg17
     environment:
       POSTGRES_USER: postgres
@@ -12,16 +45,21 @@ services:
     ports:
       - "5432:5432"
     
-  fastapi:
+  backend:
+    container_name: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:80"
     volumes:
-      - ./backend:/app
+      - ./backend:/app 
+    depends_on:
+      - milvus
+      - postgres
 
-  streamlit:
+  visual:
+    container_name: visual
     build:
       context: ./visual
       dockerfile: Dockerfile
@@ -36,3 +74,7 @@ services:
 volumes:
   pg_data:
     external: true
+
+networks:
+  default:
+    name: chatbot

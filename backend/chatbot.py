@@ -1,6 +1,6 @@
 from openai import AsyncOpenAI
 from typing import Union,List,Dict
-from backend.storage.collection import Collection
+from storage.collection import Collection
 
 class Chatbot:
     def __init__(

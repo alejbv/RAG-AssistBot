@@ -1,4 +1,5 @@
 pymilvus
+psycopg[binary]
 numpy
 tomli
 fastapi[all]

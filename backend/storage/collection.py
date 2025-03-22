@@ -9,11 +9,17 @@ class Collection:
         self.dimension = dimension
         self.index_name = "search_index"
     
+    async def drop_collection(self):
+        """Drop the collection from the Milvus database"""
+        try:
+            await self.client.drop_collection(self.collection_name)
+            print("Collection dropped")
+            
+        except Exception as e:
+            print(f"Error in drop_collection: {e}")
+            
     async def initialize_collection(self):
         """Check the collection from the Milvus database. If the collection does not exist, it will be created.
-
-        Returns:
-            Collection: The collection object.
         """
         if not MilvusClient(uri=self.uri, token=self.token).has_collection(self.collection_name):
             try:
@@ -58,17 +64,17 @@ class Collection:
             except Exception as e:
                 print(f"Error in create_collection: {e}")
          
-    async def insert(self, data: List[Dict]):
-        """Function to store the file in the database"""
+    async def insert(self, documents: List[Dict]):
+        """Function to store the documents in the database"""
         try:
             await self.client.insert(
                 collection_name=self.collection_name,
-                records=data,
+                records=documents,
             )
-            print("File Stored")
+            print("Document Stored")
             
         except Exception as e:
-            print(f"Error in insert the data: {e}")
+            print(f"Error in insert the documents: {e}")
     
     async def search(self, vector_query: List[float], limit: int=20):
         """Search the collection using the vector_query"""
