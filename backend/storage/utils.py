@@ -5,7 +5,8 @@ import numpy as np
 from openai import OpenAI
 from psycopg.rows import dict_row
 from typing import List, Iterable, Dict
-## Methods for loading the data and configuration
+
+# Methods for loading the data and configuration
 def load_config() -> Dict:
     """Load the configuration necessary for the application.
 
@@ -38,8 +39,9 @@ def load_data() -> Iterable[Dict]:
         cursor.execute("SELECT * from biblioteca_normativa;")        
         return cursor.fetchall()       
     
+# Methods for processing the data
 ## Methods for cleaning and preprocessing the data
-def __process_text(text:str) -> str:
+def get_text(text:str) -> str:
     """Find all matches of a pattern in a text and return the correct form of the text. This method is for cleaning the text.
     Args:
         text (str): The text to search for matches.
@@ -61,16 +63,19 @@ def __process_text(text:str) -> str:
     
     # Get the correct text    
     if len(positions)>= 2:
-        return text[positions[0][2]:positions[1][1]]
+        result = text[positions[0][2]:positions[1][1]]
     
     elif len(positions)==1:
-        return text[:positions[0][1]]
+        result = text[:positions[0][1]]
     
     else:
-        return text    
+        result = text
+        
+    return result.lower()
 
 def process_document(doc:Dict) -> Dict:
-    """Preprocess the document for indexing. This method will clean the text and generate the embeddings for the summary.
+    """Preprocess the document for indexing. This method will clean the text and generate the embeddings for the summary. It will
+    also generate a summary if the document does not have one and split the text into chunks if it is too long.
 
     Args:
         doc (Dict): The document to preprocess
@@ -78,25 +83,25 @@ def process_document(doc:Dict) -> Dict:
     Returns:
         Dict: A new document with the processed text and summary
     """
-    # Cleaning the text    
+    # Step 1: Get the exact text from the document
     new_doc = doc.copy()
-    new_doc["text"] = __process_text(new_doc["text"])
+    new_doc["text"] = get_text(new_doc["text"])
     
-    # Processing the summary
+    # Step 2: Get the summaries and embeddings
     if new_doc["summary"] != "":
-        new_doc["dense_vector"] =  get_embeddings([new_doc["summary"]])[0]
+        new_doc["dense_vector"] =  get_embeddings([new_doc["summary"]])[0]  
     
     elif new_doc["text"] != "":
         # Get a summary
         new_doc["summary"] = summarize_document(new_doc["text"])
-        new_doc["dense_vector"] =  get_embeddings([new_doc["summary"]])[0]
-
-    else:
-        new_doc = None
+        new_doc["dense_vector"] =  get_embeddings([new_doc["summary"]])[0]  
     
+    else:
+        new_doc = None  
     # Checkin if the document text have the right size
     return new_doc
 
+## Methodos using Generative AI
 def get_embeddings(documents: List[str]) -> List[np.ndarray]:
     # Loading configutation for embeddings
     config = load_config()
@@ -159,18 +164,52 @@ def summarize_document(text):
     except Exception as e:
         return f"Error generating summary: {e}"
 
-
-def basic_text_split(text: str, max_length: int = 256, overlap=20) -> List[str]:
-    """Split the text into chunks of a given length. 
-
+## Methods for splitting the text into chunks
+def hierarchical_chunking(doc: Dict, hierarchy: List[str] ,max_length: int = 1024) -> List[Dict]:
+    """Split the document into chunks based on the hierarchy. The hierarchy is a list of strings that represent the
+    hierarchy of the document. 
     Args:
-        text (str): The text to split
-        max_length (int, optional): The max size of each chunk. Defaults to 256.
-        overlap (int, optional): The overlap between chunk. Defaults to 20.
+        doct (str): The text to split
+        hierarchy (List[str]): The list of strings that represent the hierarchy of the document.
+        max_length (int, optional): The max size of each chunk. Defaults to 1024.
 
     Returns:
         List[str]: The list of chunks of text.
     """
+    # Split the text into sentences
+    current_chunk = [doc]
+    for h in hierarchy:
+        new_chunk = []
+        for chunk in current_chunk:
+            # Check if the chunk is too long
+            if len(chunk) > max_length:
+            # Split the chunk into sentences
+                new_chunk.extend(split_hierarchy(chunk, h))
+        current_chunk = new_chunk
     
-    tokens = text.split()
-    return [" ".join(tokens[i:i + max_length])for i in range(0, len(tokens), max_length - overlap)]
+    return current_chunk
+
+def split_hierarchy(doc: str, hierarchy: str) -> List[Dict]:
+    """Split the text into chunks of a given length. 
+
+    Args:
+        text (str): The text to split
+        hierarchy (str): The string that represents the hierarchy of the document.
+    Returns:
+        List[Dict]: The list of chunks of text split by the hierarchy.
+    """
+    
+    # Split the text into sentences
+    chunks_iterator = re.split(hierarchy, doc["text"])
+    
+    chunks = []
+    for index,current in enumerate(chunks_iterator,start=1):
+        new_chunk = doc.copy()
+        new_chunk.update({
+            "text": current,
+            hierarchy: index
+        })
+        chunks.append(new_chunk)
+        
+         
+    return chunks

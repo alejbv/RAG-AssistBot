@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 # Request models for the API endpoints
-class ResolutionRequest(BaseModel):
+class Normativa(BaseModel):
     id: str
     name: str
     text: str
@@ -14,5 +14,5 @@ class ResolutionRequest(BaseModel):
     slug: str
     gazette: str
 
-class QueryRequest(BaseModel):
+class Query(BaseModel):
     query: str

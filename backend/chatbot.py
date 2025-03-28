@@ -87,14 +87,47 @@ class Chatbot:
             print(f"Error in store_file: {e}")
         
     async def retrieve_context(self,query: str, limit: int=10):
-        """Function to retrieve the files from the database"""
+        """Function to retrieve the context from the database using the query
+
+        Args:
+            query (str): The query for retrieving the context
+            limit (int, optional): The number of context to retrieve. Defaults to 10.
+
+        Returns:
+            List[str]: The context retrieved from the database
+        """
         # Get the embeddings of the query
         query_embedding = await self.get_embeddings([query])[0]
         # Execute the pipeline to retrieve the chunks
         retrieved_chunks = await self.collection.search(query_embedding,limit=limit)
         return  ''.join([chunk['text'] for chunk in retrieved_chunks])
     
+    #TODO: Add a function to retrieve the documents from the database using the query
+    async def retrieve_document(self,query: str, limit: int=10):
+        """Function to retrieve the documents from the database using the query
+
+        Args:
+            query (str): _description_
+            limit (int, optional): _description_. Defaults to 10.
+
+        Returns:
+            _type_: _description_
+        """
+        # Get the embeddings of the query
+        context = self.retrieve_context(query, limit)
+        # Execute the pipeline to retrieve the chunks
+        return context
+    
     async def _stream(self, messages: List[Dict], store: bool):
+        """Function to generate the response of the assistant for the user
+
+        Args:
+            messages (List[Dict]): The messages history
+            store (bool): A boolean to store the messages
+
+        Yields:
+            str: The response of the assistant
+        """
         try:
             result = []
             response = await self.client.chat.completions.create(
@@ -123,6 +156,36 @@ class Chatbot:
         except Exception as e:
             print(f"Error in _stream: {e}")
             yield f"ERROR: {str(e)}".encode("utf-8")
+    
+    async def _generate(self, messages: List[Dict],store: bool):
+        """Function to generate the response of the assistant for auxiliary functions.
+
+        Args:
+            messages (List[Dict]): The messages history
+            store (bool): A boolean to store the messages
+
+        Returns:
+            str: The response of the assistant
+        """
+        try:
+            result = []
+            response = await self.client.chat.completions.create(
+                                    messages=messages,
+                                    model=self.inference_model,
+                                    max_completion_tokens=2400, 
+                                    temperature=0.4, 
+                                )
+            current_output = response.choices[0].message.content
+            result.append(current_output)
+            
+            if store:
+                self.store("assistant", "".join(result))
+                
+            yield "".join(result)
+        
+        except Exception as e:
+            print(f"Error in _generate: {e}")
+            yield f"ERROR: {str(e)}".encode("utf-8")
             
     async def reply(
         self,
@@ -140,7 +203,7 @@ class Chatbot:
             store (bool, optional): If store the query and the response. Defaults to True.
 
         Returns:
-            _type_: _description_
+            str: The response of the assistant to the user
         """
         # Retrieve the context 
         context = await self.retrieve_context(query) 

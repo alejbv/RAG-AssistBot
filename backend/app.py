@@ -1,7 +1,8 @@
+from typing import List
 from chatbot import Chatbot
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from models import ResolutionRequest, QueryRequest
+from models import Normativa, Query
 from fastapi.responses import StreamingResponse
 from storage.collection import Collection
 from storage.utils import load_config
@@ -51,13 +52,20 @@ app = FastAPI(lifespan=lifespan)
         
 # Endpoint for query POST
 @app.post("/chat")
-async def reply_query(query_request: QueryRequest):
+async def reply_query(query_request: Query) -> StreamingResponse:
   user_response = await app.state.bot.reply(query_request.query)
   return StreamingResponse(user_response, media_type="text/plain")
 
+# Endpoint for retrieval POST
+@app.post("/retrieve")
+async def retrieve(query_request: Query) -> List[Normativa]:
+    """Function to retrieve the documents from the database using the query"""
+    normativas = await app.state.bot.retrieve_document(query_request.query)
+    return normativas
+
 # Endpoint for files POST
 @app.post("/update")
-async def add_file(resolution: ResolutionRequest):
-   data = resolution.model_dump()
+async def add_file(normativa: Normativa):
+   data = normativa.model_dump()
    await app.state.bot.store_file(data)
    return {"status": "ok"}
