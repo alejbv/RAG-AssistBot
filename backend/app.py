@@ -53,7 +53,7 @@ app = FastAPI(lifespan=lifespan)
 # Endpoint for query POST
 @app.post("/chat")
 async def reply_query(query_request: Query) -> StreamingResponse:
-  user_response = await app.state.bot.reply(query_request.query)
+  user_response = await app.state.bot.chat(query_request.query)
   return StreamingResponse(user_response, media_type="text/plain")
 
 # Endpoint for retrieval POST

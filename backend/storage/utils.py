@@ -6,6 +6,7 @@ from openai import OpenAI
 from psycopg.rows import dict_row
 from typing import List, Iterable, Dict
 
+
 # Methods for loading the data and configuration
 def load_config() -> Dict:
     """Load the configuration necessary for the application.
@@ -16,6 +17,7 @@ def load_config() -> Dict:
     with open("../.secrets/config.toml", 'rb') as f:
         config = tomli.load(f)   
     return config
+
 
 def load_data() -> Iterable[Dict]:
     """Load the data from the Postgres database.
@@ -70,8 +72,9 @@ def get_text(text:str) -> str:
     
     else:
         result = text
-        
+    
     return result.lower()
+
 
 def process_document(doc:Dict) -> Dict:
     """Preprocess the document for indexing. This method will clean the text and generate the embeddings for the summary. It will
@@ -101,6 +104,7 @@ def process_document(doc:Dict) -> Dict:
     # Checkin if the document text have the right size
     return new_doc
 
+
 ## Methodos using Generative AI
 def get_embeddings(documents: List[str]) -> List[np.ndarray]:
     # Loading configutation for embeddings
@@ -124,6 +128,7 @@ def get_embeddings(documents: List[str]) -> List[np.ndarray]:
         print(e)
         
     return np.array(embeddings)    
+
 
 def summarize_document(text):
     """
@@ -164,8 +169,9 @@ def summarize_document(text):
     except Exception as e:
         return f"Error generating summary: {e}"
 
+
 ## Methods for splitting the text into chunks
-def hierarchical_chunking(doc: Dict, hierarchy: List[str] ,max_length: int = 1024) -> List[Dict]:
+def hierarchical_chunking(doc: Dict, hierarchy: List[tuple] ,max_length: int = 2048) -> List[Dict]:
     """Split the document into chunks based on the hierarchy. The hierarchy is a list of strings that represent the
     hierarchy of the document. 
     Args:
@@ -182,14 +188,17 @@ def hierarchical_chunking(doc: Dict, hierarchy: List[str] ,max_length: int = 102
         new_chunk = []
         for chunk in current_chunk:
             # Check if the chunk is too long
-            if len(chunk) > max_length:
+            if len(chunk["text"]) > max_length:
             # Split the chunk into sentences
                 new_chunk.extend(split_hierarchy(chunk, h))
+            else:
+                new_chunk.append(chunk)
         current_chunk = new_chunk
     
     return current_chunk
 
-def split_hierarchy(doc: str, hierarchy: str) -> List[Dict]:
+
+def split_hierarchy(doc: str, hierarchy: tuple) -> List[Dict]:
     """Split the text into chunks of a given length. 
 
     Args:
@@ -200,14 +209,17 @@ def split_hierarchy(doc: str, hierarchy: str) -> List[Dict]:
     """
     
     # Split the text into sentences
-    chunks_iterator = re.split(hierarchy, doc["text"])
+    chunks_iterator = list(re.split(hierarchy[0], doc["text"]))
+    
+    if len(chunks_iterator) == 1:
+        return [doc]
     
     chunks = []
     for index,current in enumerate(chunks_iterator,start=1):
         new_chunk = doc.copy()
         new_chunk.update({
             "text": current,
-            hierarchy: index
+            hierarchy[1]: index
         })
         chunks.append(new_chunk)
         

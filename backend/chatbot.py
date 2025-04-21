@@ -40,6 +40,7 @@ class Chatbot:
     def store(self, role: str, content: str):
         self.message_history.append(dict(role=role, content=content))
 
+    
     def history(self, memory: Union[int,str]):
         if memory == 0:
             return []
@@ -51,6 +52,7 @@ class Chatbot:
 
         return messages.copy()
 
+    
     async def get_embeddings(self,documents: List[str]) -> List[float]:
         """Generate embeddings for the given documents using OpenAI's API.
 
@@ -73,6 +75,7 @@ class Chatbot:
             print(f"Error in get_embedding: {e}")
             return None
             
+    
     async def store_file(self,data: Dict):
         """Function to store the file in the database"""
         
@@ -86,6 +89,7 @@ class Chatbot:
         except Exception as e:
             print(f"Error in store_file: {e}")
         
+    
     async def retrieve_context(self,query: str, limit: int=10):
         """Function to retrieve the context from the database using the query
 
@@ -102,6 +106,7 @@ class Chatbot:
         retrieved_chunks = await self.collection.search(query_embedding,limit=limit)
         return  ''.join([chunk['text'] for chunk in retrieved_chunks])
     
+    
     #TODO: Add a function to retrieve the documents from the database using the query
     async def retrieve_document(self,query: str, limit: int=10):
         """Function to retrieve the documents from the database using the query
@@ -117,6 +122,7 @@ class Chatbot:
         context = self.retrieve_context(query, limit)
         # Execute the pipeline to retrieve the chunks
         return context
+    
     
     async def _stream(self, messages: List[Dict], store: bool):
         """Function to generate the response of the assistant for the user
@@ -157,6 +163,7 @@ class Chatbot:
             print(f"Error in _stream: {e}")
             yield f"ERROR: {str(e)}".encode("utf-8")
     
+    
     async def _generate(self, messages: List[Dict],store: bool):
         """Function to generate the response of the assistant for auxiliary functions.
 
@@ -187,7 +194,8 @@ class Chatbot:
             print(f"Error in _generate: {e}")
             yield f"ERROR: {str(e)}".encode("utf-8")
             
-    async def reply(
+    
+    async def chat(
         self,
         query:  str,
         memory: Union[int,str]="all",
