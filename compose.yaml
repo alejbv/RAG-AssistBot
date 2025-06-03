@@ -55,7 +55,7 @@ services:
     volumes:
       - ./backend:/app 
     depends_on:
-      - milvus
+      #- milvus
       - postgres
 
   visual:
@@ -64,7 +64,7 @@ services:
       context: ./visual
       dockerfile: Dockerfile
     depends_on:
-      - fastapi
+      - backend
     ports:
       - "8501:8501"
     volumes:

@@ -6,3 +6,4 @@ source/
 data/
 .toml
 .secrets/
+gacetas/*

@@ -232,3 +232,20 @@ class Chatbot:
         
         return self._stream(messages,store)
     
+    
+    #TODO: Un system prompt mas complejo que clasifique la query segun su complejidad y determine si es necesario subdividirla en mas preguntas.
+    #TODO: Un system prompt que determine si la query es de tipo "retrieve" o "chat" y actue en consecuencia.
+    # Y determine si es necesario hacer retrieval con el contexto semantico o con metadatos y haga llamadas a las funciones correspondientes con los datos necesarios.
+    #TODO: Un system prompt que clasifique si los datos recuperados son suficientes para responder a la query o si es necesario hacer retrieval con el contexto semantico o con metadatos y haga llamadas a las funciones correspondientes con los datos necesarios.
+    #TODO: Function to retrieve the documents from the database using the metadata
+    async def retrieve_metadata(self,metadata: Dict[str,str], limit: int=10):
+        """Function to retrieve the documents from the database using the metadata
+
+        Args:
+            metadata (Dict[str,str]): The metadata to retrieve the documents
+            limit (int, optional): The number of documents to retrieve. Defaults to 10.
+
+        Returns:
+            List[Dict]: The documents retrieved from the database
+        """
+        return await self.collection.search_by_metadata(metadata,limit)

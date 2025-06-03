@@ -2,10 +2,13 @@ import re
 import tomli
 import psycopg
 import numpy as np
+from pathlib import Path
 from openai import OpenAI
 from psycopg.rows import dict_row
 from typing import List, Iterable, Dict
-
+#import pymupdf
+import pymupdf4llm
+from langchain.text_splitter import MarkdownTextSplitter
 
 # Methods for loading the data and configuration
 def load_config() -> Dict:
@@ -225,3 +228,44 @@ def split_hierarchy(doc: str, hierarchy: tuple) -> List[Dict]:
         
          
     return chunks
+
+
+def save_md(md_text:bytes, file_path: Path):
+    output_path = Path("test/")
+    file_name = file_path.name.split('.')[0]
+    file_output = output_path/Path(f'{file_name}.md')
+    file_output.write_bytes(md_text.encode())
+    
+def pdf_to_md(file_path: str) -> dict:
+    """Function for extracting the gacetas information of each pdf file
+
+    Args:
+        file_path (str): The path of the pdf file to process
+
+    Returns:
+        dict: The information exctracted from the pdf file
+    """
+    
+    md_text = pymupdf4llm.to_markdown(file_path)
+    save_md(md_text.encode(),file_path)
+    splitter = MarkdownTextSplitter(chunk_size=40, chunk_overlap=0)
+    splitter.create_documents([md_text])
+    
+    
+    
+def read_documents () -> list[dict]:
+    """Function for loading and processing the data to store in the vector database
+
+    Returns:
+        list[dict]: A list with the metadata for each law/resolution
+    """
+    path = Path("gacetas/")
+    documents = []
+    for file_path in path.rglob("*.pdf"):
+        documents.append(pdf_to_md(file_path))
+    return documents
+
+
+if __name__=='__main__':
+    print("Enter")
+    read_documents()
