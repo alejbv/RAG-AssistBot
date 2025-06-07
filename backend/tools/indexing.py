@@ -1,7 +1,7 @@
 import asyncio
 from tqdm import tqdm 
-from collection import Collection
-from utils import load_data, load_config, process_document
+from backend.tools.collection import Collection
+from backend.tools.utils import load_data, load_config, process_document
 
 # Load the collection
 print("### Loading the collection ###")

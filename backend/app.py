@@ -1,11 +1,13 @@
 from typing import List
-from chatbot import Chatbot
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from models import Normativa, Query
 from fastapi.responses import StreamingResponse
-from storage.collection import Collection
-from storage.utils import load_config
+
+from os import getenv
+from dotenv import load_dotenv
+from tools import Collection, LLM, Chatbot
+from tools import store_file,  retrieve_documents
 from prompt import DEFAULT_SYSTEM_PROMPT,DEFAULT_USER_PROMPT
 
 # Create the FastAPI app with a lifespan event handler to create the search index on startup    
@@ -17,31 +19,40 @@ async def lifespan(app: FastAPI):
         app (FastAPI): The FastAPI instace
     """
     # Load configuration data
-    config = load_config()
+    load_dotenv('.env')  
+    
     # Getting the collection
     collection = Collection(
-                            uri=config["MILVUS_URI"],
-                            token=config["MILVUS_TOKEN"], 
-                            collection_name=config["MILVUS_COLLECTION_NAME"], 
-                            dimension=config["EMBEDDING_DIMENSION"]
+                            getenv("MILVUS_URI"),
+                            getenv("MILVUS_TOKEN"),
+                            getenv("MILVUS_COLLECTION_NAME"),
+                            int(getenv("EMBEDDING_DIMENSION"))
                         )
-    
     
     # Initialize the collection and the index
     await collection.initialize_collection()
+    
+    # Initializing the LLM
+    llm = LLM(
+        getenv("BASE_URL",""),
+        getenv("API_KEY",""), 
+        getenv("INFERENCE_MODEL",""),
+        getenv("EMBEDDING_MODEL",""),
+        int(getenv("EMBEDDING_DIMENSION",""))
+    )
 
+    
     # Setting the chatbot
     bot = Chatbot(
-        system_prompt=DEFAULT_SYSTEM_PROMPT,
-        user_prompt=DEFAULT_USER_PROMPT,
-        base_url=config["BASE_URL"],
-        api_key=config["API_KEY"],
-        inference_model=config["INFERENCE_MODEL"],
-        embedding_model=config["EMBEDDING_MODEL"],
-        vector_dimension=config["EMBEDDING_DIMENSION"],
-        collection=collection
-        )
+                DEFAULT_SYSTEM_PROMPT,
+                DEFAULT_USER_PROMPT,
+                llm,
+                collection
+            )
     
+    
+    app.state.collection = collection
+    app.state.llm = llm
     app.state.bot = bot
     
     yield
@@ -60,12 +71,12 @@ async def reply_query(query_request: Query) -> StreamingResponse:
 @app.post("/retrieve")
 async def retrieve(query_request: Query) -> List[Normativa]:
     """Function to retrieve the documents from the database using the query"""
-    normativas = await app.state.bot.retrieve_document(query_request.query)
-    return normativas
+    normativas = await retrieve_documents(app.state.llm, app.state.collection, query_request.query)
+    return [Normativa.model_validate(doc) for doc in normativas]
 
 # Endpoint for files POST
 @app.post("/update")
 async def add_file(normativa: Normativa):
    data = normativa.model_dump()
-   await app.state.bot.store_file(data)
+   await store_file(app.state.llm, app.state.collection, data)
    return {"status": "ok"}

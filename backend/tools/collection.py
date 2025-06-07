@@ -1,5 +1,6 @@
 from typing import List, Dict
 from pymilvus import AsyncMilvusClient,MilvusClient,FieldSchema ,DataType, CollectionSchema
+
 class Collection:
     def __init__(self,uri: str, token: str, collection_name: str, dimension: int):
         self.uri = uri
