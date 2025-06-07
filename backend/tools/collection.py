@@ -1,3 +1,4 @@
+from .llm import Vector
 from typing import List, Dict
 from pymilvus import AsyncMilvusClient,MilvusClient,FieldSchema ,DataType, CollectionSchema
 
@@ -81,7 +82,7 @@ class Collection:
             print(f"Error in insert the documents: {e}")
     
     
-    async def search(self, vector_query: List[float], limit: int=20):
+    async def search(self, vector_query: List[Vector], limit: int=20):
         """Search the collection using the vector_query"""
         params = {"metric_type": "IP"}
         res = await self.client.search(
@@ -91,7 +92,7 @@ class Collection:
             limit=limit,
             output_fields=["text"],
             search_params=params,
-        )[0]
+        )
         
         return res
     

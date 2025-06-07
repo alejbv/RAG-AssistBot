@@ -20,6 +20,7 @@ Usando el contexto siguiente:
 {context}
 """
 
+
 LAW_ASSISTANT_SYSTEM_PROMPT = """
 **Contexto**: Eres un asistente legal especializado en responder consultas jurídicas de manera clara, precisa e intuitiva. Tu enfoque se basa en analizar cuidadosamente la información y el contexto proporcionado, priorizando la comprensión del usuario y la explicación detallada de los conceptos legales involucrados.
 
@@ -60,6 +61,7 @@ Verifica si satisface la siguiente pregunta:
 Usando lo siguiente como contexto:
 {context}
 """
+
 
 CRITIC_SYSTEM_PROMPT = """
 ### **System Prompt: Crítico de Respuestas Legales**
@@ -191,18 +193,8 @@ class Chatbot:
         current_iter = 1
         while loop and current_iter < max_iter:
             # Retrieve context information from current_query
-            if isinstance(current_query,str):
-                print("Retrieving context for query str:", current_query)
-                current_context =  await retrieve_context(self.llm,self.collection, current_query)
+            current_context =  await retrieve_context(self.llm,self.collection, current_query)
             
-            else:
-                print("Retrieving context for query list:", current_query)
-                ctx = []
-                for q in current_query:
-                    r = await retrieve_context(self.llm,self.retriever,q)
-                    ctx.append(r)
-                current_context = "\n".join(ctx)
-
              # Use the user prompt to generate the message for the plan generation
             current_message = Message.user(
                 LAW_ASSISTANT_USER_PROMPT.format(
