@@ -74,7 +74,7 @@ class Collection:
         try:
             await self.client.insert(
                 collection_name=self.collection_name,
-                records=documents,
+                data=documents,
             )
             print("Document Stored")
             

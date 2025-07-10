@@ -8,8 +8,8 @@ from typing import Iterable
 import pymupdf4llm
 from langchain.schema import Document
 #from .llm import LLM, Message
-from langchain.text_splitter import MarkdownTextSplitter
- 
+#from langchain.text_splitter import MarkdownTextSplitter
+from langchain.text_splitter import  MarkdownHeaderTextSplitter
 
 # Methods for loading the data and configuration
 def load_data() -> Iterable[dict]:
@@ -33,99 +33,6 @@ def load_data() -> Iterable[dict]:
         cursor.execute("SELECT * from biblioteca_normativa;")        
         return cursor.fetchall()       
     
-# # Methods for processing the data
-# ## Methods for cleaning and preprocessing the data
-# def get_text(text:str) -> str:
-#     """Find all matches of a pattern in a text and return the correct form of the text. This method is for cleaning the text.
-#     Args:
-#         text (str): The text to search for matches.
-
-#     Returns:
-#         str: The cleaned text.
-#     """
-#     # Use re.finditer to get all matches
-#     pattern = r"_+"
-#     matches = re.finditer(pattern, text)
-    
-#     # Iterate through the matches and extract the information
-#     positions = []
-#     for match in matches:
-#         start = match.start()  # Start index of the match
-#         end = match.end()      # End index of the match
-#         substring = match.group()  # Substring that matches the pattern
-#         positions.append((substring, start, end))
-    
-#     # Get the correct text    
-#     if len(positions)>= 2:
-#         result = text[positions[0][2]:positions[1][1]]
-    
-#     elif len(positions)==1:
-#         result = text[:positions[0][1]]
-    
-#     else:
-#         result = text
-    
-#     return result.lower()
-
-
-# def process_document(llm: LLM, doc:dict) -> dict:
-#     """Preprocess the document for indexing. This method will clean the text and generate the embeddings for the summary. It will
-#     also generate a summary if the document does not have one and split the text into chunks if it is too long.
-
-#     Args:
-#         doc (Dict): The document to preprocess
-
-#     Returns:
-#         Dict: A new document with the processed text and summary
-#     """
-#     # Step 1: Get the exact text from the document
-#     new_doc = doc.copy()
-#     new_doc["text"] = get_text(new_doc["text"])
-    
-#     # Step 2: Get the summaries and embeddings
-#     if new_doc["summary"] != "":
-#         new_doc["dense_vector"] =  llm._embedd([new_doc["summary"]])[0]  
-    
-#     elif new_doc["text"] != "":
-#         # Get a summary
-#         new_doc["summary"] = summarize_document(new_doc["text"])
-#         new_doc["dense_vector"] =  llm._embedd([new_doc["summary"]])[0]  
-    
-#     else:
-#         new_doc = None  
-#     # Checkin if the document text have the right size
-#     return new_doc
-
-
-# def summarize_document(llm: LLM, text: str):
-#     """
-#     Generates a summary of a document using OpenAI.
-
-#     Parameters:
-#     - text (str): The text of the document you want to summarize.
-#     - max_tokens (int): The maximum length of the summary in tokens (default: 100).
-
-#     Returns:
-#     - str: The generated summary.
-#     """
-#     try:
-#         # Define the prompt for the summary
-#         prompt = (
-#             "Resume el siguiente texto legal de manera concisa, reteniendo todos los puntos clave, "
-#             "definiciones importantes, obligaciones, derechos, sanciones y cualquier detalle relevante "
-#             "esencial para entender la ley. El resumen debe ser claro, directo y usar la menor cantidad "
-#             "de tokens posible. Evita omitir información crítica, ejemplos redundantes o lenguaje superfluo. "
-#             "Asegúrate de mantener el tono formal y técnico del texto legal. Da la respuesta en un parrafo."
-#             f"Texto legal: {text}"
-#         )
-#         msg = Message.system( prompt)
-#         summary = llm._chat([msg], tools=None)
-#         # Extract and return the summary
-#         return summary
-
-#     except Exception as e:
-#         return f"Error generating summary: {e}"
-
 
 def hierarchical_chunking(doc: dict, hierarchy: list[tuple] ,max_length: int = 2048) -> list[dict]:
     """Split the document into chunks based on the hierarchy. The hierarchy is a list of strings that represent the
@@ -154,7 +61,7 @@ def hierarchical_chunking(doc: dict, hierarchy: list[tuple] ,max_length: int = 2
     return current_chunk
 
 
-def split_hierarchy(doc: str, hierarchy: tuple) -> list[Document]:
+def split_hierarchy(doc: dict, hierarchy: tuple) -> list[dict]:
     """Split the text into chunks of a given length. 
 
     Args:
@@ -183,7 +90,7 @@ def split_hierarchy(doc: str, hierarchy: tuple) -> list[Document]:
     return chunks
 
 
-def split_text(texts: list[str], chunk_size: int = 2049, chunk_overlap: int = 516) -> list[str]:
+def split_text(texts: str, headers) -> list[Document]:
     """Split the text into chunks of a given length. 
 
     Args:
@@ -195,8 +102,8 @@ def split_text(texts: list[str], chunk_size: int = 2049, chunk_overlap: int = 51
         List[str]: The list of chunks of text.
     """
     # Split the text into chunks
-    splitter = MarkdownTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    return splitter.create_documents(texts)
+    splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers,strip_headers=False)
+    return splitter.split_text(texts)
 
 
 def save_md(md_text:bytes, file_path: Path):
@@ -206,7 +113,7 @@ def save_md(md_text:bytes, file_path: Path):
     file_output.write_bytes(md_text)
     
     
-def pdf_to_md(file_path: str) -> dict:
+def pdf_to_md(file_path: Path) -> str:
     """Function for extracting the gacetas information of each pdf file
 
     Args:
@@ -241,10 +148,29 @@ def extract_metadata(document: str) -> dict:
 
     Returns:
         dict: A dictionary with the metadata of the document.
+        
+        
+    Posible metadata:
+        - Título
+        - Fecha de publicación
+        - Número de gaceta
+        - Organismo emisor
+        - Tipo de normativa
+        - Estado (vigente, derogada, etc.)
+        - Texto completo
+        - Enlace al documento completo
     """
     # Define a regex pattern to match the metadata
-    pattern = r"(?P<key>[\w\s]+):\s*(?P<value>.+)"
-    matches = re.findall(pattern, document)
+    METADATA_SEP = [
+                (r"\n#{1,6} ","Encabezados"), 
+                (r"\*\*.*?\*\*","Enunciados")
+            ]
+    
+    matches = []
+    for pattern, key in METADATA_SEP:
+        found = re.findall(pattern, document)
+        for value in found:
+            matches.append((key, value))
     
     # Create a dictionary from the matches
     metadata = {key.strip(): value.strip() for key, value in matches}
@@ -258,9 +184,61 @@ def process_document(document:str):
     ______: Separador de pagina: Esto separa cada pagina del documento
     
     """
-    raise NotImplementedError
+    # Separar por paginas usando RESOLUTION_SEP
+    RESOLUTION_SEP = r"^___+\n"
+    pages = re.split(RESOLUTION_SEP, document, flags=re.MULTILINE)
+    
+    metadata = extract_metadata(pages[0])
+    # Separar por secciones jerarquicas usando DOCUMENT_SEP
+    DOCUMENT_SEP = [
+            (r"CAP[IÍ]TULO","Capitulo"),
+            (r"ART[IÍ]CULO","Articulo"),
+            (r"ACUERDO","Acuerdo"),
+            (r"ANEXO","Anexo"),
+            (r"^[A-Z]+:","Declaración"),
+            (r"\d+\.\s","Numeración"),
+            (r"[a-z]\)","Inciso"),
+            (r"\n\n","Parrafo"),
+            (r"\n","Saltos de linea")
+        ]
+    
+    chunks = []
+    
+    for page in pages[1:]:
+        # Before chunking, clean the text
+        # Header
+        page = re.sub(r"\*\*Gaceta Oficial de la República\*\*","",page)
+        page = re.sub(r"GACETA OFICIAL", "", page)
+        # Page Number
+        page = re.sub(r"\*\*\d+\*\*","",page)
+        
+        # Dates
+        page = re.sub(r"\*\*\d{2}/\d{2}/\d{4}\*\*","",page)
+        
+        page = re.sub(r'GOC-\d{4}-.+',"",page)
+        # In case de some asterics left
+        page = re.sub(r"\*{2,4}","",page)
+        
+        # Multiple lines
+        page = re.sub(r"\n{3,}","\n\n",page)
+        
+        page_chunks = split_text(page,DOCUMENT_SEP)
+        # page_chunks = hierarchical_chunking(
+        #     {"text": page, **metadata}, 
+        #     DOCUMENT_SEP, 
+        #     max_length=2048 
+        # )
+        chunks.extend(page_chunks)
+    
+    return chunks
 
 if __name__=='__main__':
-    documents = read_documents()
+    #documents = read_documents()
+    file = "test/GO_151_29_Diciembre_2021_ordinaria.md"#"test/GO_01_04_Enero_2024_ordinaria.md"
+    file = Path(file).read_text()
+    r = process_document(file)
+    for p in r:
+        print(p)
+        print("_____")
     #chunks = split_text(documents[:5])
     #print(chunks[0])

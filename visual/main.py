@@ -10,7 +10,7 @@ URL = "http://fastapi:80"
 st.title("Test Interface")
 
 with st.sidebar:
-    files = st.file_uploader("Subir archivo", type=["md", "txt","pdf", "docx"],accept_multiple_files=True)
+    files = st.file_uploader("Subir archivo", type=["md"],accept_multiple_files=True)
     if files:
         for file in tqdm(files,desc="Uploading files"):
             if file.name.endswith(".pdf"):
@@ -22,7 +22,7 @@ with st.sidebar:
                 content = StringIO(file.getvalue().decode("utf-8",errors='replace')).read()
             
             data = {"file": content}
-            resp = requests.post(f"{URL}/update",json=data)
+            resp = requests.post(f"{URL}/upload/",json=data)
             print("Request Send")
     
 # Initialize chat history
@@ -56,7 +56,7 @@ if user_input := st.chat_input("Input"):
         data = {"query": user_input}
         # Process Message
         try:
-            response = requests.post(f"{URL}/chat",json=data,stream=True)
+            response = requests.post(f"{URL}/chat/",json=data,stream=True)
             response.raise_for_status()
             iter_response = response.iter_content(chunk_size=None, decode_unicode=True)
             final_response = st.write_stream(iter_response)

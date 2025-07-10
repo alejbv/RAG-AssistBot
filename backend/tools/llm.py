@@ -24,6 +24,8 @@ class Message(BaseModel):
         return cls(role="assistant", content=content)
 
 
+
+
 class LLM:
     def __init__(
         self,
@@ -96,27 +98,3 @@ class LLM:
             rich.print(result)
 
         return result # type: ignore
-    
-    
-    async def _embedd(self,documents: list[str]) -> Union[list[Vector], None]:
-        """Generate embeddings for the given documents using OpenAI's API.
-
-        Args:
-            documents (List[str]): The list of documents to get the embeddings
-
-        Returns:
-            ndarray: The embeddings of the documents
-        """
-        # Getting the embeddings
-        
-        try:      
-            response = await self.client.embeddings.create(
-                        input=documents,
-                        model=self.embedding_model,
-                        dimensions=self.embedding_dimension,
-                        )
-            return [doc.embedding for doc in response.data]
-                
-        except Exception as e:
-            print(f"Error in get_embedding: {e}")
-            return None

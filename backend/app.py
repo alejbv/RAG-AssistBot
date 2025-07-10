@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI
+from fastapi import BackgroundTasks, FastAPI, File, Body, UploadFile
 from contextlib import asynccontextmanager
 from models import Normativa, Query
 from fastapi.responses import StreamingResponse
@@ -8,7 +8,6 @@ from os import getenv
 from dotenv import load_dotenv
 from tools import Collection, LLM, Chatbot
 from tools import store_file,  retrieve_documents
-from prompt import DEFAULT_SYSTEM_PROMPT,DEFAULT_USER_PROMPT
 
 # Create the FastAPI app with a lifespan event handler to create the search index on startup    
 @asynccontextmanager
@@ -23,10 +22,10 @@ async def lifespan(app: FastAPI):
     
     # Getting the collection
     collection = Collection(
-                            getenv("MILVUS_URI"),
-                            getenv("MILVUS_TOKEN"),
-                            getenv("MILVUS_COLLECTION_NAME"),
-                            int(getenv("EMBEDDING_DIMENSION"))
+                            getenv("MILVUS_URI",""),
+                            getenv("MILVUS_TOKEN",""),
+                            getenv("MILVUS_COLLECTION_NAME",""),
+                            int(getenv("EMBEDDING_DIMENSION",""))
                         )
     
     # Initialize the collection and the index
@@ -44,8 +43,6 @@ async def lifespan(app: FastAPI):
     
     # Setting the chatbot
     bot = Chatbot(
-                DEFAULT_SYSTEM_PROMPT,
-                DEFAULT_USER_PROMPT,
                 llm,
                 collection
             )
@@ -62,8 +59,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
         
 # Endpoint for query POST
-@app.post("/chat")
-async def reply_query(query_request: Query) -> StreamingResponse:
+@app.post("/chat/")
+async def chat(query_request: Query) -> StreamingResponse:
   user_response = await app.state.bot.chat(query_request.query)
   return StreamingResponse(user_response, media_type="text/plain")
 
@@ -75,8 +72,38 @@ async def retrieve(query_request: Query) -> List[Normativa]:
     return [Normativa.model_validate(doc) for doc in normativas]
 
 # Endpoint for files POST
-@app.post("/update")
-async def add_file(normativa: Normativa):
-   data = normativa.model_dump()
-   await store_file(app.state.llm, app.state.collection, data)
-   return {"status": "ok"}
+@app.post("/upload/")
+async def add_file(tasks: BackgroundTasks, file: UploadFile = File(...),):
+   document_data = await file.read()
+   tasks.add_task(process_file, file.filename, document_data) # type: ignore
+   
+   return {"message": "File upload started", "filename": file.filename}
+
+def process_file(document_id: str, document_data: bytes):
+    """Function to process the file and store it in the database"""
+     
+    # Fetch the document using esorm
+    document = await Document.get(document_id)
+
+    converter = markitdown.MarkItDown()
+    result = converter.convert_stream(
+        io.BytesIO(document_data), file_extension=document.filename.split(".")[-1]
+    )
+
+    text = result.markdown
+    text = clean_text(text)
+
+    # Use the chunker to split the text into (header_path, content) tuples
+    chunks_data = chunker(text)
+    for chunks in chunks_data:
+        print("CHUNK", chunks)
+    
+    if not chunks_data:
+        raise ValueError("No chunks found")
+
+    # Extract just the text content for bulk embedding
+    chunk_texts = [chunk_text for _, chunk_text in chunks_data]
+    
+    # Get embeddings in bulk
+    embedding_response = app.state.embedding.create(chunk_texts)
+    
