@@ -1,4 +1,4 @@
-from .llm import Vector
+from .embedding import Vector
 from typing import List, Dict
 from pymilvus import AsyncMilvusClient,MilvusClient,FieldSchema ,DataType, CollectionSchema
 

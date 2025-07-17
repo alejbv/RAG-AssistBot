@@ -4,7 +4,6 @@ from pydantic import BaseModel
 from typing import TypeVar, Type, Union
 
 T = TypeVar("T", bound=BaseModel)
-Vector = list[float]
 
 
 class Message(BaseModel):
@@ -23,7 +22,9 @@ class Message(BaseModel):
     def assistant(cls, content: str) -> "Message":
         return cls(role="assistant", content=content)
 
-
+    @classmethod
+    def tool(cls, content: str) -> "Message":
+        return cls(role="tool", content=content)
 
 
 class LLM:
@@ -32,8 +33,6 @@ class LLM:
         api_key: str,
         base_url: str,
         inference_model: str,
-        embedding_model: str,
-        embedding_dimension: int,
         verbose:bool = False,
     ) -> None:
         
@@ -41,8 +40,6 @@ class LLM:
         self.verbose = verbose
         # Load configuration data
         self.inference_model = inference_model
-        self.embedding_model = embedding_model
-        self.embedding_dimension = embedding_dimension
         # LLM Tools
         self.client = AsyncOpenAI(
                              base_url=base_url,

@@ -1,24 +1,26 @@
 from typing import Union
-from .llm import LLM
+from .embedding import Embedding
 from .collection import Collection
+from .resolver import Resolver
+from ddgs import DDGS
+import asyncio
 
-
-async def store_file(llm: LLM, collection: Collection, data: dict):
-    """Function to store the file in the database"""
+async def web_search(query: str, limit: int = 10) -> list[str]:
+    """Function to search the web using DuckDuckGo and return a list of data.
     
-    embedding = await llm._embedd([data["summary"]])[0]
-    data["embedding"] = embedding
-    
-    try:
-        await collection.insert([data])
-        print("File Stored")
+    Args:
+        query (str): The search query.
+        limit (int, optional): The maximum number of results to return. Defaults to 10.
         
-    except Exception as e:
-        print(f"Error in store_file: {e}")
-    
+    Returns:
+        list[str]: A list of URLs from the search results.
+    """
+    results = DDGS().text(query,region='wt-wt', safesearch='off' , max_results=limit)
+    await asyncio.sleep(1)  # Simulate async operation
+    return [f"{result['title']}\n {result['body']}" for result in results]
 
-async def retrieve_from_queries(llm: LLM, collection: Collection, queries: Union[list[str],str], limit: int=10) -> Union[list[str],list[list[str]]]:
-    """Function to retrieve the chunks from the database using the queries
+async def retrieve_context(solver: Resolver, queries: Union[list[str],str], limit: int=10) -> Union[list[str],list[list[str]]]:
+    """Function to retrieve the context from the database using the queries(s)
     Args:
         llm (LLM): The LLM instance to use for embedding the query
         collection (Collection): The collection instance to search for the context
@@ -31,9 +33,13 @@ async def retrieve_from_queries(llm: LLM, collection: Collection, queries: Union
     # Check if the queries is a string and convert it to a list
     if isinstance(queries, str):
         queries = [queries]
-        
+    
+    # Resolve the embedding and collection instances from the solver
+    embedding = solver.resolve(Embedding)
+    collection = solver.resolve(Collection)
+     
     # Get the embeddings of the queries
-    query_embeddings = await llm._embedd(queries)
+    query_embeddings = embedding.create(queries)
     
     
     if query_embeddings:
@@ -43,37 +49,28 @@ async def retrieve_from_queries(llm: LLM, collection: Collection, queries: Union
     
     return []
 
-
-async def retrieve_context(llm: LLM, collection: Collection, queries: Union[list[str],str], limit: int=10)-> str:
-    """Function to retrieve the context from the database using the queries"""
     
-    # Retrive the chunks from the database using the queries
-    retrieved_information = await retrieve_from_queries(llm, collection, queries, limit)
     
-    # Convert the retrieved information into a context string
-    ctx = []
-    for chunks in retrieved_information:
-        ctx.append(''.join([chunk['text'] for chunk in chunks]))
     
-    return  ''.join(ctx)
-
+    
 
 #TODO: Add a function to return all the Resolution that match the query
-async def retrieve_documents(llm: LLM, collection: Collection, query: str ,limit: int=10):
+async def retrieve_documents(solver: Resolver, query: str ,limit: int=10):
     """Function to retrieve the documents from the database
     Args:
         limit (int, optional): The number of documents to retrieve. Defaults to 10.
     Returns:
         List[Dict]: The documents retrieved from the database
     """
-    retrieved_information = await retrieve_from_queries(llm, collection, query, limit)
+    retrieved_information = await retrieve_context(solver, query, limit)
     
     metadata = {}
     #return await collection.get_all(limit=limit, metadata)
     
     raise NotImplementedError
 
-async def retrieve_metadata(collection: Collection, metadata: dict[str,str], limit: int=10):
+#TODO: Add a function to retrieve the metadata from the database
+async def retrieve_metadata(solver: Resolver, metadata: dict[str,str], limit: int=10):
     """Function to retrieve the documents from the database using the metadata
     Args:
         metadata (Dict[str,str]): The metadata to retrieve the documents
@@ -81,4 +78,6 @@ async def retrieve_metadata(collection: Collection, metadata: dict[str,str], lim
     Returns:
         List[Dict]: The documents retrieved from the database
     """
+    # Resolve the collection instance from the solver
+    collection = solver.resolve(Collection)
     return await collection.search_by_metadata(metadata,limit)

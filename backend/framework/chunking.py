@@ -2,7 +2,7 @@ import re
 import io
 import markitdown
 
-class HierarchicalChunker():
+class Chunker:
     
     def __init__(self, max_chunk_size: int = 2000, chunk_overlap: int = 200, other_headers: list[tuple[str,str]] = None):
         """

@@ -1,5 +1,7 @@
 from openai import OpenAI
 
+
+Vector = list[float]
 class Embedding:
     def __init__(self,
                  api_key: str,
@@ -17,8 +19,8 @@ class Embedding:
                              api_key=api_key,
                             )
         
-
-    def create(self,documents: str | list[str]):
+    
+    def create(self,documents: str | list[str]) -> list[Vector] | None:
         """Generate embeddings for the given documents using OpenAI's API.
 
         Args:
@@ -35,7 +37,7 @@ class Embedding:
                         model=self.embedding_model,
                         #dimensions=self.embedding_dimension,
                         )
-            return response
+            return [v.embedding for v in response.data] 
                 
         except Exception as e:
             print(f"Error in get_embedding: {e}")

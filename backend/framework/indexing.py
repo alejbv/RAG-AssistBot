@@ -2,8 +2,8 @@ import os
 import asyncio
 from tqdm import tqdm
 from dotenv import load_dotenv
-from backend.tools.collection import Collection
-from backend.tools.utils import load_data, process_document
+from backend.framework.collection import Collection
+from backend.framework.utils import load_data, process_document
 
 # Load the collection
 print("### Loading the collection ###")

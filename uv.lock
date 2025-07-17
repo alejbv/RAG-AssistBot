@@ -287,6 +287,8 @@ source = { virtual = "." }
 dependencies = [
     { name = "asyncio" },
     { name = "babel" },
+    { name = "ddgs" },
+    { name = "duckduckgo-search" },
     { name = "fastapi", extra = ["standard"] },
     { name = "langchain" },
     { name = "markitdown" },
@@ -298,6 +300,7 @@ dependencies = [
     { name = "pymupdf" },
     { name = "pymupdf4llm" },
     { name = "pypdf" },
+    { name = "python-telegram-bot" },
     { name = "rich" },
     { name = "ruff" },
     { name = "starlette" },
@@ -315,6 +318,8 @@ dev = [
 requires-dist = [
     { name = "asyncio", specifier = ">=3.4.3" },
     { name = "babel", specifier = ">=2.17.0" },
+    { name = "ddgs", specifier = ">=9.2.3" },
+    { name = "duckduckgo-search", specifier = ">=8.1.1" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.115.11" },
     { name = "langchain", specifier = ">=0.3.25" },
     { name = "markitdown", specifier = ">=0.1.2" },
@@ -326,6 +331,7 @@ requires-dist = [
     { name = "pymupdf", specifier = ">=1.26.0" },
     { name = "pymupdf4llm", specifier = ">=0.0.24" },
     { name = "pypdf", specifier = ">=5.6.0" },
+    { name = "python-telegram-bot", specifier = ">=22.2" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "ruff", specifier = ">=0.9.6" },
     { name = "starlette", specifier = ">=0.46.1" },
@@ -380,6 +386,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e9/a8/fb783cb0abe2b5fded9f55e5703015cdf1c9c85b3669087c538dd15a6a86/comm-0.2.2.tar.gz", hash = "sha256:3fd7a84065306e07bea1773df6eb8282de51ba82f77c72f9c85716ab11fe980e", size = 6210 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e6/75/49e5bfe642f71f272236b5b2d2691cf915a7283cc0ceda56357b61daa538/comm-0.2.2-py3-none-any.whl", hash = "sha256:e6fb86cb70ff661ee8c9c14e7d36d6de3b4066f1441be4063df9c5009f0a64d3", size = 7180 },
+]
+
+[[package]]
+name = "ddgs"
+version = "9.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "lxml" },
+    { name = "primp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/57/e1/8154854084b24908ec782f1c2713a66b205bdcd2b20a9bc3ce274afccc24/ddgs-9.2.3.tar.gz", hash = "sha256:5ec4e0bf0a9055a991c958695b1c0194c2511d254449ab88eb874297879ed1a5", size = 26553 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/af/d42b3f4eff55cdcddf8b33631be602e40d63d7cf0cffcf15503166a46b22/ddgs-9.2.3-py3-none-any.whl", hash = "sha256:4b658edf52db3bfe80c12492077e7cc9d39312b0dbb03f8669753ac1313d3784", size = 30148 },
 ]
 
 [[package]]
@@ -483,6 +503,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/89/fe/8a71f561cc07ec01aad2a2a961828dfe6ca28994b1c9f3997c04d9da4b26/docxtpl-0.19.1.tar.gz", hash = "sha256:5836aab5583a82e2e81b086fae130ce94dc080f6b7fe0e43f83f4e3e3e5daecf", size = 31156 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/db/18fadca96a1895a25afaec1d4a373a0f1a9087fe088363719ba590d14c95/docxtpl-0.19.1-py2.py3-none-any.whl", hash = "sha256:12dbf93069d3d08897e3a44a4a043cb60d0320b88228ec2a6c6cf0e103c732dd", size = 29508 },
+]
+
+[[package]]
+name = "duckduckgo-search"
+version = "8.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "lxml" },
+    { name = "primp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/10/ef/07791a05751e6cc9de1dd49fb12730259ee109b18e6d097e25e6c32d5617/duckduckgo_search-8.1.1.tar.gz", hash = "sha256:9da91c9eb26a17e016ea1da26235d40404b46b0565ea86d75a9f78cc9441f935", size = 22868 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/72/c027b3b488b1010cf71670032fcf7e681d44b81829d484bb04e31a949a8d/duckduckgo_search-8.1.1-py3-none-any.whl", hash = "sha256:f48adbb06626ee05918f7e0cef3a45639e9939805c4fc179e68c48a12f1b5062", size = 18932 },
 ]
 
 [[package]]
@@ -1653,6 +1687,22 @@ wheels = [
 ]
 
 [[package]]
+name = "primp"
+version = "0.15.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/56/0b/a87556189da4de1fc6360ca1aa05e8335509633f836cdd06dd17f0743300/primp-0.15.0.tar.gz", hash = "sha256:1af8ea4b15f57571ff7fc5e282a82c5eb69bc695e19b8ddeeda324397965b30a", size = 113022 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/5a/146ac964b99ea7657ad67eb66f770be6577dfe9200cb28f9a95baffd6c3f/primp-0.15.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:1b281f4ca41a0c6612d4c6e68b96e28acfe786d226a427cd944baa8d7acd644f", size = 3178914 },
+    { url = "https://files.pythonhosted.org/packages/bc/8a/cc2321e32db3ce64d6e32950d5bcbea01861db97bfb20b5394affc45b387/primp-0.15.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:489cbab55cd793ceb8f90bb7423c6ea64ebb53208ffcf7a044138e3c66d77299", size = 2955079 },
+    { url = "https://files.pythonhosted.org/packages/c3/7b/cbd5d999a07ff2a21465975d4eb477ae6f69765e8fe8c9087dab250180d8/primp-0.15.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c18b45c23f94016215f62d2334552224236217aaeb716871ce0e4dcfa08eb161", size = 3281018 },
+    { url = "https://files.pythonhosted.org/packages/1b/6e/a6221c612e61303aec2bcac3f0a02e8b67aee8c0db7bdc174aeb8010f975/primp-0.15.0-cp38-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:e985a9cba2e3f96a323722e5440aa9eccaac3178e74b884778e926b5249df080", size = 3255229 },
+    { url = "https://files.pythonhosted.org/packages/3b/54/bfeef5aca613dc660a69d0760a26c6b8747d8fdb5a7f20cb2cee53c9862f/primp-0.15.0-cp38-abi3-manylinux_2_34_armv7l.whl", hash = "sha256:6b84a6ffa083e34668ff0037221d399c24d939b5629cd38223af860de9e17a83", size = 3014522 },
+    { url = "https://files.pythonhosted.org/packages/ac/96/84078e09f16a1dad208f2fe0f8a81be2cf36e024675b0f9eec0c2f6e2182/primp-0.15.0-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:592f6079646bdf5abbbfc3b0a28dac8de943f8907a250ce09398cda5eaebd260", size = 3418567 },
+    { url = "https://files.pythonhosted.org/packages/6c/80/8a7a9587d3eb85be3d0b64319f2f690c90eb7953e3f73a9ddd9e46c8dc42/primp-0.15.0-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:5a728e5a05f37db6189eb413d22c78bd143fa59dd6a8a26dacd43332b3971fe8", size = 3606279 },
+    { url = "https://files.pythonhosted.org/packages/0c/dd/f0183ed0145e58cf9d286c1b2c14f63ccee987a4ff79ac85acc31b5d86bd/primp-0.15.0-cp38-abi3-win_amd64.whl", hash = "sha256:aeb6bd20b06dfc92cfe4436939c18de88a58c640752cf7f30d9e4ae893cdec32", size = 3149967 },
+]
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.50"
 source = { registry = "https://pypi.org/simple" }
@@ -2049,6 +2099,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f3/87/f44d7c9f274c7ee665a29b885ec97089ec5dc034c7f3fafa03da9e39a09e/python_multipart-0.0.20.tar.gz", hash = "sha256:8dd0cab45b8e23064ae09147625994d090fa46f5b0d1e13af944c331a7fa9d13", size = 37158 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/45/58/38b5afbc1a800eeea951b9285d3912613f2603bdf897a4ab0f4bd7f405fc/python_multipart-0.0.20-py3-none-any.whl", hash = "sha256:8a62d3a8335e06589fe01f2a3e178cdcc632f3fbe0d492ad9ee0ec35aab1f104", size = 24546 },
+]
+
+[[package]]
+name = "python-telegram-bot"
+version = "22.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/a5/59e8d771e332105b7acbd48ff7b7f0415f9d50c32bac46963f487cc6cf94/python_telegram_bot-22.2.tar.gz", hash = "sha256:20dc096673961b849c041814d9618a3c7036dcca73015e576293600234457482", size = 1453202 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7b/3e/3ea0241bccb204b740af5755e1b3a106ae2c36252b6f888872c45810e936/python_telegram_bot-22.2-py3-none-any.whl", hash = "sha256:234b933f960c534ffb2679f4d1e937bae24b4ac1c4767b6b03754bd38640cec0", size = 708737 },
 ]
 
 [[package]]
