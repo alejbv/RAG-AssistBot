@@ -1,13 +1,11 @@
 import inspect
 from typing import Callable
-
-class Tool:
-    def __init__(self, name: str, description: str ,func: Callable[[str], str]):
-        self.name = name
-        self.description = description.strip()
-        self.func = func
-        self.signature = inspect.signature(func)
-
+from pydantic import BaseModel
+class Tool(BaseModel):
+    name: str
+    description: str
+    func: Callable
+    
     @classmethod
     def create_tool(cls, target:Callable) -> "Tool":
         """Class function for generate a tool from the target function only
@@ -21,40 +19,41 @@ class Tool:
         
         name = target.__name__
         description = inspect.getdoc(target) or ""
-        return cls(name, description, target)
+        return cls(name=name, description=description, func=target)
     
-    def __repr__(self) -> str:
+    
+    def parameters(self):
+        # type_map = {
+        #     str: "string",
+        #     int: "integer",
+        #     float: "number",
+        #     bool: "boolean",
+        #     list: "array",
+        #     dict: "object",
+        #     type(None): "null",
+        # }
+
         
-        # The parameters from the function 
-        parameters = {param.name:{"type": param.annotation} for param in self.signature.parameters.values()}
         
-        # The parameters required for the function
-        required = [
-                param.name
-                for param in self.signature.parameters.values()
-                if param.default == inspect._empty
-            ]
+        # # The parameters from the function 
+        # signature = inspect.signature(self.func)
+        # parameters = {}
+        # for param in signature.parameters.values():
+        #     try:
+        #         param_type = type_map.get(param.annotation, "string")
+        #     except KeyError as e:
+        #         raise KeyError(
+        #             f"Unknown type annotation {param.annotation} for parameter {param.name}: {str(e)}"
+        #         )
+
+        #     if param.default == inspect._empty:
+        #         parameters[param.name] = param_type
+    
         
-        function_schema = {
-        "type": "function",
-        "function": {
-            "name": self.name,
-            "description": self.description,
-            "parameters": {
-                "type": "object",
-                "properties": parameters,
-                "required": required,
-            },
-        },
-    }
-        return str(function_schema)
-        
-    async def use(self, query: str) -> str:
-        try:
-            if inspect.iscoroutinefunction(self.func):
-                result = await self.func(query)
-            else:
-                result = self.func(query)
-            return result
-        except Exception as e:
-            return str(f"Error executing tool {self.name}: {e}")
+        # return {name: type for name, type in parameters.items() if name != "return"}
+        args = inspect.get_annotations(self.func)
+        return {name: type for name, type in args.items() if name != "return"}
+            
+    async def use(self, **kwargs) -> str:
+        return await self.func(**kwargs)
+

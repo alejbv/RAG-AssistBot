@@ -6,15 +6,8 @@ from ddgs import DDGS
 import asyncio
 
 async def web_search(query: str, limit: int = 10) -> list[str]:
-    """Function to search the web using DuckDuckGo and return a list of data.
-    
-    Args:
-        query (str): The search query.
-        limit (int, optional): The maximum number of results to return. Defaults to 10.
-        
-    Returns:
-        list[str]: A list of URLs from the search results.
-    """
+    """Function to search the web using DuckDuckGo and return a list of data."""
+    print(f"Searching the web for: {query}")
     results = DDGS().text(query,region='wt-wt', safesearch='off' , max_results=limit)
     await asyncio.sleep(1)  # Simulate async operation
     return [f"{result['title']}\n {result['body']}" for result in results]

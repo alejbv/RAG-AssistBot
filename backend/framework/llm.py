@@ -88,7 +88,7 @@ class LLM:
             response_format=model,
             **kwargs,
         )
-
+        print(f"Response: {response}")
         result = response.choices[0].message.parsed
 
         if self.verbose:
