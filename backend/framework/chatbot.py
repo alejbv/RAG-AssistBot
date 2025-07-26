@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
 from typing import  Optional, Callable, Dict, List
 from .llm import LLM, Message
 from .tool import Tool
@@ -11,11 +11,6 @@ class Action(BaseModel):
     name: str = Field(..., description="The name of the tool to use")
     thought: str = Field(..., description="The thought process behind the action")
 
-class Args(BaseModel):
-    thought: str = Field(..., description="The thought process behind the selection of the parameters")
-    list_args: list = Field(..., description="The list of arguments to pass to the tool")
-#    list_kwargs: dict = Field(..., description="The dictionary of keyword arguments to pass to the tool")
-    
 class Reasoning(BaseModel):
     observation: str
     thought: str
@@ -68,46 +63,57 @@ class Chatbot:
     async def action(self,query: str, messages: List[Message]) -> str:
         """Function to select and perform an action using the tools available in the agent."""
         
+        print(f"Query: {query}")
         tools = "\n".join(f"- Nombre Tool: {tool.name} Descripcion Tool: {tool.description}" for tool in self.tools.values())    
         action_prompt = INVOKE_ACTION.format(
                 query=query,
                 tools=tools
             )
-        
-        print(f"Action Prompt {action_prompt}")
-        action_message = Message.system(action_prompt)
               
-        messages.append(action_message)
-        action_response = await self.llm._parse(
+        action = await self.llm._parse(
             model=Action,
-            messages=messages,
+            messages=messages + [Message.system(action_prompt)] ,
         )
         
         
         # Preparando los argumentos para generar los parametros del tool
-        name = action_response.name
+        name = action.name
         tool = self.tools[name]
         
-        description = tool.description
         parameters = tool.parameters()
         
+        print(f"Action: {action.thought}")
+        print(f"Tool: {name} ")   
+        tool_name_camel_case = ''.join(word.capitalize() for word in tool.name.split('_'))
+
+        # parameters debe ser un dict con nombre: (tipo, default)
+        # Si parameters tiene solo tipos, poner default en ...
+        model_fields = {}
+        for param_name, param_type in parameters.items():
+            if isinstance(param_type, tuple) and len(param_type) == 2:
+                model_fields[param_name] = param_type
+            else:
+                model_fields[param_name] = (param_type, ...)
+        model_cls: type[BaseModel] = create_model(tool_name_camel_case, **model_fields)
+
+        
+        
         args_prompt = GENERATE_ARGS.format(
-            name=action_response.name,
-            description=description,
-            parameters="\n".join(f"Argumento: {arg} Tipo: {tpe}" for arg, tpe in parameters.items())
+            name=tool.name,
+            parameters= parameters,
+            description=tool.description,
+            format=model_cls.model_json_schema(),
         )
+
         
-        messages.append(
-            Message.system(args_prompt)
+        response: BaseModel = await self.llm._parse(
+            model=model_cls, 
+            messages=messages + [Message.system(args_prompt)]
         )
+
         
-        args_response = await self.llm._parse(
-            model=Args,
-            messages=messages,
-        )
         # Call the tool with the provided arguments
-        result = await tool.use(*args_response.list_args)
-        print(f"Tool result: {result}")
+        result = await tool.run(**response.model_dump())
         
         return f"Observation from tool {name} executed with result: {result}"
     
@@ -141,7 +147,9 @@ class Chatbot:
             response = await self.llm._parse(
                 model = Reasoning,
                 messages=messages,
-            )       
+            )
+            print(f"Observation: {response.observation}")
+            print(f"Thought: {response.thought}")       
             # Check if the response contains an action to perform
             if new_query:= response.query:
                 # If the action is valid, use the corresponding tool
@@ -149,14 +157,16 @@ class Chatbot:
                     tool_result = await self.action(new_query, messages)
                 
                 except Exception as e:
+                    print(f"Error using generation actions: {e}")
                     tool_result = f"Error using generation actions: {e}"
                 
-                finally:
-                    # Save the current thought and the tool result
-                    messages.extend([
-                        Message.assistant(f"Thought: {response.thought}"),
-                        Message.tool(f"Tool Result: {tool_result}")
-                    ])
+                
+                # Save the current thought and the tool result
+                print(f"Tool Result: {tool_result}")
+                messages.extend([
+                    Message.assistant(f"Thought: {response.thought}"),
+                    Message.tool(f"Tool Result: {tool_result}")
+                ])    
 
             elif response.final:
                 # Save the final thought
@@ -173,6 +183,8 @@ class Chatbot:
         )
         final_response = await self.llm._chat(messages)
         self.save(Message.assistant(final_response))
+        
+        print(f"Final Response: {final_response}")
         return final_response
             
    

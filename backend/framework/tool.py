@@ -23,37 +23,10 @@ class Tool(BaseModel):
     
     
     def parameters(self):
-        # type_map = {
-        #     str: "string",
-        #     int: "integer",
-        #     float: "number",
-        #     bool: "boolean",
-        #     list: "array",
-        #     dict: "object",
-        #     type(None): "null",
-        # }
-
-        
-        
-        # # The parameters from the function 
-        # signature = inspect.signature(self.func)
-        # parameters = {}
-        # for param in signature.parameters.values():
-        #     try:
-        #         param_type = type_map.get(param.annotation, "string")
-        #     except KeyError as e:
-        #         raise KeyError(
-        #             f"Unknown type annotation {param.annotation} for parameter {param.name}: {str(e)}"
-        #         )
-
-        #     if param.default == inspect._empty:
-        #         parameters[param.name] = param_type
-    
-        
-        # return {name: type for name, type in parameters.items() if name != "return"}
+        """Function to get the parameters of the function"""
         args = inspect.get_annotations(self.func)
         return {name: type for name, type in args.items() if name != "return"}
             
-    async def use(self, **kwargs) -> str:
+    async def run(self, **kwargs) -> str:
         return await self.func(**kwargs)
 

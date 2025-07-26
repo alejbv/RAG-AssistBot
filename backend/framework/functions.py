@@ -10,7 +10,9 @@ async def web_search(query: str, limit: int = 10) -> list[str]:
     print(f"Searching the web for: {query}")
     results = DDGS().text(query,region='wt-wt', safesearch='off' , max_results=limit)
     await asyncio.sleep(1)  # Simulate async operation
-    return [f"{result['title']}\n {result['body']}" for result in results]
+    response = [f"{result['title']}\n {result['body']}" for result in results]
+    print(f"Web search results: {response}")
+    return response
 
 async def retrieve_context(solver: Resolver, queries: Union[list[str],str], limit: int=10) -> Union[list[str],list[list[str]]]:
     """Function to retrieve the context from the database using the queries(s)

@@ -1,6 +1,6 @@
 import inspect
 import functools
-from typing import TypeVar, Type
+from typing import TypeVar, Type, Callable
 
 T = TypeVar('T')
 
@@ -19,7 +19,7 @@ class Resolver:
 
         raise ValueError(f"Could not resolve {t}")
 
-    def wrap(self, target):
+    def wrap(self, target) -> Callable:
         """
         Decorator to wraps a function to automatically inject a resolver.
         Returns a new function without the Resolver parameter.
