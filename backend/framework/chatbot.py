@@ -59,7 +59,38 @@ class Chatbot:
     
         return messages.copy()
 
-
+    async def generate_args(self, tool: Tool, messages: List[Message]) -> BaseModel:
+        """Function to generate the arguments for a tool using the LLM."""
+        
+        # Preparing the parameters for generating the tool parameters
+        parameters = tool.parameters()
+        print(f"Parameters: {parameters}")
+        
+        # If parameters has only types, set default to ...
+        model_fields = {}
+        for param_name, param_type in parameters.items():
+            if isinstance(param_type, tuple) and len(param_type) == 2:
+                model_fields[param_name] = param_type
+            else:
+                model_fields[param_name] = (param_type, ...)
+        
+        tool_name_camel_case = ''.join(word.capitalize() for word in tool.name.split('_'))
+        model_cls: type[BaseModel] = create_model(tool_name_camel_case, **model_fields)
+        
+        args_prompt = GENERATE_ARGS.format(
+            name=tool.name,
+            parameters=parameters,
+            description=tool.description,
+            format=model_cls.model_json_schema(),
+        )
+        
+        response: BaseModel = await self.llm._parse(
+            model=model_cls, 
+            messages=messages + [Message.system(args_prompt)]
+        )
+        
+        return response
+    
     async def action(self,query: str, messages: List[Message]) -> str:
         """Function to select and perform an action using the tools available in the agent."""
         
@@ -80,41 +111,13 @@ class Chatbot:
         name = action.name
         tool = self.tools[name]
         
-        parameters = tool.parameters()
-        
         print(f"Action: {action.thought}")
         print(f"Tool: {name} ")   
-        tool_name_camel_case = ''.join(word.capitalize() for word in tool.name.split('_'))
-
-        # parameters debe ser un dict con nombre: (tipo, default)
-        # Si parameters tiene solo tipos, poner default en ...
-        model_fields = {}
-        for param_name, param_type in parameters.items():
-            if isinstance(param_type, tuple) and len(param_type) == 2:
-                model_fields[param_name] = param_type
-            else:
-                model_fields[param_name] = (param_type, ...)
-        model_cls: type[BaseModel] = create_model(tool_name_camel_case, **model_fields)
-
         
-        
-        args_prompt = GENERATE_ARGS.format(
-            name=tool.name,
-            parameters= parameters,
-            description=tool.description,
-            format=model_cls.model_json_schema(),
-        )
-
-        
-        response: BaseModel = await self.llm._parse(
-            model=model_cls, 
-            messages=messages + [Message.system(args_prompt)]
-        )
-
-        
+        #response = await self.generate_args(tool, messages)
         # Call the tool with the provided arguments
-        result = await tool.run(**response.model_dump())
-        
+        #result = await tool.run(**response.model_dump())
+        result = await tool.run(query=query)
         return f"Observation from tool {name} executed with result: {result}"
     
     
