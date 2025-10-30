@@ -1,38 +1,51 @@
 from pydantic import BaseModel, Field, create_model
-from typing import  Optional, Callable, Dict, List
+from typing import  Optional, Callable, Dict, List, Any
 from .llm import LLM, Message
 from .tool import Tool
-from .prompts import LEGAL_REACT_PROMPT, INVOKE_ACTION, GENERATE_ARGS
+from .prompts import  DEFAULT_SYSTEM_PROMPT, LEGAL_REACT_PROMPT, REPLY_PROMPT, INVOKE_ACTION, GENERATE_ARGS
 import inspect
 
 
 class Action(BaseModel):
     """Class to represent an action to perform with a tool."""
     name: str = Field(..., description="The name of the tool to use")
-    thought: str = Field(..., description="The thought process behind the action")
+    reasoning: str = Field(..., description="The reasoning behind the action selection")
 
 class Reasoning(BaseModel):
-    observation: str
-    thought: str
-    query: str | None = None
-    final: bool    
+    question: str = Field(..., description="The question to answer")
+    observation: str = Field(..., description="The current state of the task and the knowledge available")
+    thought: str = Field(..., description="The thought process behind the next step")
+    queries: Optional[List[str]] = Field(None, description="A list of queries to perform if information is needed")
+    final: bool = Field(False, description="Whether the response is final or not")
+
+
+class ToolResult(BaseModel):
+    tool: str
+    error: str | None = None
+    result: Any | None = None
 
 
 class Chatbot:
     def __init__(
         self,
+        name: str,
+        description: str,
         llm: LLM,
-        prompt_template: str = LEGAL_REACT_PROMPT,
+        system_prompt: str = DEFAULT_SYSTEM_PROMPT,
         tools: list[Tool] = [],
     ) -> None:
+        
+        # Setting the name and description
+        self.name = name
+        self.description = description
                 
         # Setting parameters
         self.llm = llm
-        self.prompt_template = prompt_template
+        self.system_prompt = system_prompt.format(name=name, description=description)
         self.tools: Dict[str, Tool] = {tool.name: tool for tool in tools} if tools else {}    
-        # History
-        self.messages: List[Message] = []
         
+        # History
+        self.messages: List[Message] = [Message.system(self.system_prompt)]
         
     
     def save(self, message: Message):
@@ -58,6 +71,7 @@ class Chatbot:
             messages = self.messages
     
         return messages.copy()
+
 
     async def generate_args(self, tool: Tool, messages: List[Message]) -> BaseModel:
         """Function to generate the arguments for a tool using the LLM."""
@@ -90,15 +104,17 @@ class Chatbot:
         )
         
         return response
+
     
-    async def action(self,query: str, messages: List[Message]) -> str:
+    async def action(self,query: str, messages: List[Message]) -> ToolResult:
         """Function to select and perform an action using the tools available in the agent."""
         
         print(f"Query: {query}")
         tools = "\n".join(f"- Nombre Tool: {tool.name} Descripcion Tool: {tool.description}" for tool in self.tools.values())    
         action_prompt = INVOKE_ACTION.format(
                 query=query,
-                tools=tools
+                tools=tools,
+                format= Action.model_json_schema()
             )
               
         action = await self.llm._parse(
@@ -106,22 +122,40 @@ class Chatbot:
             messages=messages + [Message.system(action_prompt)] ,
         )
         
-        
         # Preparando los argumentos para generar los parametros del tool
         name = action.name
         tool = self.tools[name]
         
-        print(f"Action: {action.thought}")
-        print(f"Tool: {name} ")   
-        
+        print(f"ACTION: {name}")
         #response = await self.generate_args(tool, messages)
         # Call the tool with the provided arguments
         #result = await tool.run(**response.model_dump())
-        result = await tool.run(query=query)
-        return f"Observation from tool {name} executed with result: {result}"
+        try:
+            result = await tool.run(query=query)
+        except Exception as e:
+            return ToolResult(tool=tool.name, error=str(e))
+
+
+        return ToolResult(
+            tool=tool.name,
+            result=result,
+        )
     
     
-    async def perform(self, query: str,  memory: Optional[int] = None, max_iterations: int =5 ) -> str:
+    async def reply(self, query: str,messages: List[Message]) -> str:
+        """Function to generate a response to the user using the LLM."""
+        # Prepare the messages for the LLM
+        messages.append(Message.system(REPLY_PROMPT.format(query=query)))
+        # Call the LLM to generate the response
+        response = await self.llm._chat(messages)
+        
+        # Save the response in the history
+        self.save(Message.assistant(response))
+        
+        return response
+    
+    
+    async def perform(self, query: str,  memory: Optional[int] = None, max_iterations: int = 5 ) -> str:
         """Function to generate an accurate response to a user need using the ReAcT pattern.
         Args:
             user_message (str):The query sent by the user
@@ -133,61 +167,36 @@ class Chatbot:
         
         # Prepare the messages history
         messages = self.history(memory)
-        
-        # Generate the prompt for the agent 
-        prompt = self.prompt_template.format(query=query)
-
-
-        # Generate and save the user message 
-        user_message = Message.user(prompt)
-        self.save(user_message)
-        
-        # Prepare the messages for the LLM
-        messages.append(user_message) 
-        
+        messages.append(Message.user(query))
+    
         for _ in range(max_iterations):
             # Call the LLM to generate the thinking process
-            response = await self.llm._parse(
+            # Prepare the messages for the LLM
+            messages.append(Message.system(LEGAL_REACT_PROMPT)) 
+            
+            reasoning = await self.llm._parse(
                 model = Reasoning,
                 messages=messages,
             )
-            print(f"Observation: {response.observation}")
-            print(f"Thought: {response.thought}")       
-            # Check if the response contains an action to perform
-            if new_query:= response.query:
-                # If the action is valid, use the corresponding tool
-                try:
-                    tool_result = await self.action(new_query, messages)
-                
-                except Exception as e:
-                    print(f"Error using generation actions: {e}")
-                    tool_result = f"Error using generation actions: {e}"
-                
-                
-                # Save the current thought and the tool result
-                print(f"Tool Result: {tool_result}")
-                messages.extend([
-                    Message.assistant(f"Thought: {response.thought}"),
-                    Message.tool(f"Tool Result: {tool_result}")
-                ])    
-
-            elif response.final:
-                # Save the final thought
-                
-                messages.append(
-                    Message.assistant(f"Final Thought: {response.thought}")
-                )
-                break
             
-                
-        # Generating the response to the user 
-        messages.append(
-            Message.system(content="Genera una respuesta final para el usuario basada en la información recopilada y el razonamiento realizado.")
-        )
-        final_response = await self.llm._chat(messages)
-        self.save(Message.assistant(final_response))
-        
-        print(f"Final Response: {final_response}")
+            print(f"REASONING: {reasoning.model_dump_json()}")
+            messages.append(Message.tool(reasoning.model_dump_json()))
+            if reasoning.final:
+                # If the reasoning is final, generate the response
+                final_response = await self.reply(query, messages)
+                return final_response
+            
+            # Check if the response contains an action to perform
+            elif queries:= reasoning.queries:
+                for query in queries:
+                    # If the action is valid, use the corresponding tool
+                    result = await self.action(query, messages)
+                    # Save the current thought and the tool result
+                    print(f"RESULT: {result.model_dump_json()}")
+                    messages.append(Message.tool(result.model_dump_json()))
+
+            
+        final_response = await self.reply(query, messages)
         return final_response
             
    
